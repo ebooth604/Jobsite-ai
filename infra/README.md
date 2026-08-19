@@ -18,15 +18,18 @@ Infrastructure as code, CI/CD configuration, and environment definitions.
 - Audit logging of who accessed or exported an evidence package — this matters both
   for customer trust and for the package's evidentiary weight.
 
-## Open decision — pick before writing IaC
+## Provider — a default, not a settled answer
 
-**AWS `ca-central-1` (Montreal) vs. Azure Canada Central. [DECIDE]**
+**AWS `ca-central-1` (Montreal)**, recorded in
+[ADR-0001](../docs/adr/0001-cloud-provider.md).
 
-Technical plan §3 and §13.4 flag this as expensive to change later: the residency
-constraint shapes IAM, networking, and SR&ED-eligible spend tracking. This directory
-stays empty until the founders choose — scaffolding one provider's IaC now would
-quietly make the decision.
+Both candidate regions satisfy residency, so residency does not decide between them;
+the §3 stack already leans AWS. The ADR states the reasoning, and states plainly that
+reversal is near zero **today** and high once IAM, networking, and buckets exist.
+Founders should confirm or override before real resources land.
 
 ## Status
 
-Not started, pending the cloud-provider decision.
+`terraform/` holds provider configuration, version pins, and a region guard that
+fails validation on any non-`ca-*` region. No compute, storage, or networking yet —
+those wait on the technical spike and on confirmation of ADR-0001.

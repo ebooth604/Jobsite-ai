@@ -11,6 +11,7 @@ This repo holds the business plan, the technical implementation plan that follow
 ```
 README.md          this file
 docs/              planning and reference documents
+  adr/               architecture decision records — what was defaulted, and why
   business-plan.md   the plan — strategy, market, pricing, GTM, financials, risks
   technical-implementation-plan.md
                      the v1 system design — architecture, data model, ML pipeline,
@@ -42,15 +43,44 @@ aggregation anywhere in the schema, Canadian residency, simulated data barred fr
 measurement. Writing those down before the code exists is the point: they are
 contractual commitments, and they are cheaper to honour by design than to retrofit.
 
-Two things are deliberately absent. There is no root `package.json`, workspace
-config, or build tooling, because technical plan §3 leaves the final stack call to
-the technical founder. And `infra/` is empty of IaC, because the AWS vs. Azure
-choice (§13.4) shapes IAM, networking, and SR&ED spend tracking — scaffolding one
-provider would quietly make that decision.
+## Toolchain
+
+Working defaults, each recorded in an ADR that says why it was chosen and what
+reversing it costs. None of these is a settled founder decision — they are picked so
+the build can start, and `docs/adr/` says so plainly.
+
+| Layer | Choice | ADR |
+|---|---|---|
+| Workspace | pnpm workspaces, Node 22 | [0002](docs/adr/0002-monorepo-tooling.md) |
+| TypeScript | TS 7, strict, project references | [0002](docs/adr/0002-monorepo-tooling.md) |
+| Lint + format | Biome (one tool, one config) | [0002](docs/adr/0002-monorepo-tooling.md) |
+| TS tests | Vitest | [0002](docs/adr/0002-monorepo-tooling.md) |
+| Python | uv, Ruff, pytest | [0003](docs/adr/0003-python-toolchain.md) |
+| Cloud | AWS `ca-central-1` (Montreal) | [0001](docs/adr/0001-cloud-provider.md) |
+
+```
+pnpm install
+pnpm check                                  # typecheck + lint + test
+cd services/quantity-ml && uv sync && uv run pytest
+```
+
+CI runs exactly these commands, as two independent jobs.
+
+**The cloud choice is the one worth a founder's attention before it hardens.**
+Reversing ADR-0001 costs nothing today and a great deal once IAM, networking, and
+buckets exist. `infra/terraform` currently holds provider config, version pins, and
+a region guard that rejects any non-`ca-*` region — residency enforced at plan time
+rather than trusted to a default.
+
+Two workspace members exist so far, and only to prove the toolchain resolves end to
+end: `packages/shared-types` (holding `CaptureOrigin`, the type the accuracy harness
+uses to keep simulated captures out of measurement) and `services/quantity-ml`
+(holding `should_abstain`, which takes its threshold as an argument rather than
+hard-coding it). Everything else is still a README.
 
 ## Status
 
-**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. Directory skeleton only, no code yet.**
+**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. Skeleton and toolchain only — no product code yet.**
 
 Everything in the plan is an assumption until the 90-day validation plan (§16) marks it otherwise. Figures labelled as estimates are estimates; market counts drawn from the ISED business register are cited as such.
 

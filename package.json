@@ -1,0 +1,21 @@
+{
+  "name": "sitewire",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.9",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}
