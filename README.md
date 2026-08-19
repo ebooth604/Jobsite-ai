@@ -1,19 +1,25 @@
 # Jobsite AI
 
-Business planning for a jobsite AI product sold to **Canadian specialty trade subcontractors** — production tracking from ordinary jobsite photos, joined to labour hours and bid productivity rates, plus contemporaneous evidence packages for change orders and statutory adjudication.
+Project repo for a jobsite AI product sold to **Canadian specialty trade subcontractors** — production tracking from ordinary jobsite photos, joined to labour hours and bid productivity rates, plus contemporaneous evidence packages for change orders and statutory adjudication.
 
 Working title: **Sitewire**.
 
-## Contents
+Right now this repo holds the business plan. Application code lands here too, at the root, when the build starts.
 
-| File | What it is |
-|---|---|
-| [`business-plan.md`](business-plan.md) | The plan. Problem, ICP, product scope, competition, bottom-up market sizing, pricing, GTM, financials, risks with kill criteria, and a 90-day validation plan. |
-| [`sitewire-plan.html`](sitewire-plan.html) | Source for the shareable one-page version of the same plan. |
+## Layout
+
+```
+README.md          this file
+docs/              planning and reference documents
+  business-plan.md   the plan — strategy, market, pricing, GTM, financials, risks
+  sitewire-plan.html source for the shareable one-page version
+```
+
+Application code goes at the root when the time comes (`src/`, `package.json`, and so on), leaving `docs/` as the planning record alongside it.
 
 ## Status
 
-**v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated.**
+**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. No code yet.**
 
 Everything in the plan is an assumption until the 90-day validation plan (§16) marks it otherwise. Figures labelled as estimates are estimates; market counts drawn from the ISED business register are cited as such.
 
@@ -29,4 +35,8 @@ The commit history tracks how the strategy changed:
 2. **Behavioural** — will the foreman take the photo?
 3. **Social** — will a unionized workforce accept it?
 
-None is settled by argument. All three are cheap to test, and the 90-day plan tests them before anything gets built.
+None is settled by argument. All three are cheap to test, and the 90-day plan tests them before anything gets built. **Don't start the app before the technical spike reports its accuracy honestly** — the whole product rests on that number.
+
+## Secrets
+
+Never commit credentials. `.gitignore` excludes `.env` files, keys, and service-account JSON from the start. Anything the app needs at runtime belongs in a secret manager or the host's environment config — not in this repo, private or not.

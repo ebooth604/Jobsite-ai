@@ -1,0 +1,47 @@
+# Secrets — never commit these. Use a secret manager or your host's env config.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# Dependencies
+node_modules/
+.pnp.*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+.pytest_cache/
+.mypy_cache/
+
+# ML artifacts — keep weights and datasets out of git
+*.ckpt
+*.pt
+*.pth
+*.onnx
+data/raw/
+data/interim/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
