@@ -1,0 +1,480 @@
+<title>Sitewire Business Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --ground:#F1F2EE;
+  --surface:#FBFBF8;
+  --surface-2:#E8EAE3;
+  --ink:#13191D;
+  --ink-2:#4E5A61;
+  --line:#D5D8CF;
+  --line-strong:#A9AFA4;
+  --accent:#17527E;
+  --accent-soft:#DCE6EE;
+  --mark:#9A7212;
+  --mark-soft:#F0E4C4;
+  --risk:#9C3B2A;
+  --risk-soft:#F2DED9;
+  --good:#2E6B4F;
+
+  --f-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --measure:68ch;
+  --rail:9rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#111619;
+    --surface:#171D21;
+    --surface-2:#1F272B;
+    --ink:#E7EAE4;
+    --ink-2:#9AA5AC;
+    --line:#2A3237;
+    --line-strong:#48545B;
+    --accent:#79B0DC;
+    --accent-soft:#1B2C39;
+    --mark:#DBB553;
+    --mark-soft:#2E2717;
+    --risk:#DE8E7C;
+    --risk-soft:#31201C;
+    --good:#7FBF9E;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#111619;
+  --surface:#171D21;
+  --surface-2:#1F272B;
+  --ink:#E7EAE4;
+  --ink-2:#9AA5AC;
+  --line:#2A3237;
+  --line-strong:#48545B;
+  --accent:#79B0DC;
+  --accent-soft:#1B2C39;
+  --mark:#DBB553;
+  --mark-soft:#2E2717;
+  --risk:#DE8E7C;
+  --risk-soft:#31201C;
+  --good:#7FBF9E;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:74rem;margin:0 auto;padding:2rem 1.5rem 6rem;}
+
+/* ---------- title block ---------- */
+.titleblock{
+  border:1.5px solid var(--line-strong);
+  background:var(--surface);
+  margin-bottom:3.5rem;
+}
+.titleblock-main{
+  padding:2.25rem 2rem 1.75rem;
+  border-bottom:1.5px solid var(--line-strong);
+  display:flex;flex-direction:column;gap:.9rem;
+}
+.eyebrow{
+  font-family:var(--f-mono);font-size:.7rem;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+}
+h1{
+  font-family:var(--f-display);
+  font-size:clamp(2.4rem,6vw,4rem);
+  font-weight:800;line-height:.98;letter-spacing:-.02em;
+  margin:0;text-wrap:balance;
+}
+h1 .thin{font-weight:500;color:var(--ink-2);display:block;font-size:.42em;letter-spacing:0;line-height:1.3;margin-top:.7rem;}
+.deck{max-width:var(--measure);margin:0;color:var(--ink-2);font-size:1.05rem;}
+.fields{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
+}
+.field{
+  padding:.85rem 1rem;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;gap:.25rem;
+}
+.field:last-child{border-right:none;}
+.field .k{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);}
+.field .v{font-family:var(--f-mono);font-size:.85rem;font-weight:600;font-variant-numeric:tabular-nums;}
+
+/* ---------- section layout ---------- */
+section{
+  display:grid;
+  grid-template-columns:var(--rail) minmax(0,1fr);
+  gap:0 2.5rem;
+  padding:2.5rem 0;
+  border-top:1px solid var(--line);
+}
+.rail{
+  font-family:var(--f-mono);font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-2);
+  display:flex;flex-direction:column;gap:.35rem;
+}
+.rail .num{color:var(--accent);font-weight:600;font-size:.95rem;letter-spacing:.02em;}
+.body{max-width:var(--measure);display:flex;flex-direction:column;gap:1.1rem;}
+.body.wide{max-width:none;}
+h2{
+  font-family:var(--f-display);font-weight:700;
+  font-size:clamp(1.5rem,3vw,2rem);line-height:1.1;letter-spacing:-.015em;
+  margin:0;text-wrap:balance;
+}
+h3{
+  font-family:var(--f-display);font-weight:700;font-size:1.05rem;
+  margin:.6rem 0 -.4rem;letter-spacing:-.005em;
+}
+p{margin:0;}
+a{color:var(--accent);text-underline-offset:.18em;text-decoration-thickness:1px;}
+strong{font-weight:600;}
+em{font-style:italic;}
+ul,ol{margin:0;padding-left:1.15rem;display:flex;flex-direction:column;gap:.5rem;}
+li::marker{color:var(--line-strong);}
+
+/* ---------- components ---------- */
+.pull{
+  border-left:3px solid var(--mark);
+  background:var(--mark-soft);
+  padding:1rem 1.25rem;
+  font-family:var(--f-display);font-weight:500;font-size:1.08rem;line-height:1.4;
+}
+.callout{
+  border:1px solid var(--line);background:var(--surface);
+  padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.5rem;
+}
+.callout .lbl{font-family:var(--f-mono);font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:1px;background:var(--line);border:1px solid var(--line);}
+.tile{background:var(--surface);padding:1.1rem 1.15rem;display:flex;flex-direction:column;gap:.3rem;}
+.tile .k{font-family:var(--f-mono);font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);}
+.tile .v{font-family:var(--f-display);font-weight:800;font-size:1.75rem;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+.tile .n{font-size:.85rem;color:var(--ink-2);line-height:1.35;}
+
+.scroll{overflow-x:auto;border:1px solid var(--line);background:var(--surface);}
+table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:36rem;}
+th,td{text-align:left;padding:.7rem .9rem;border-bottom:1px solid var(--line);vertical-align:top;}
+thead th{
+  font-family:var(--f-mono);font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--line-strong);white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none;}
+td.num,th.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;}
+td:first-child{font-weight:600;}
+
+.pill{
+  display:inline-block;font-family:var(--f-mono);font-size:.63rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;padding:.2rem .45rem;border-radius:2px;white-space:nowrap;
+}
+.pill.crit{background:var(--risk-soft);color:var(--risk);}
+.pill.high{background:var(--mark-soft);color:var(--mark);}
+.pill.med{background:var(--accent-soft);color:var(--accent);}
+
+.steps{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);}
+.step{background:var(--surface);padding:1.1rem 1.25rem;display:grid;grid-template-columns:2.2rem 1fr;gap:.2rem 1rem;align-items:start;}
+.step .s{font-family:var(--f-mono);font-weight:600;color:var(--accent);font-size:.9rem;padding-top:.15rem;}
+.step .t{font-family:var(--f-display);font-weight:700;font-size:1rem;}
+.step .d{grid-column:2;color:var(--ink-2);font-size:.95rem;}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1.25rem;}
+.card{border:1px solid var(--line);background:var(--surface);padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.55rem;}
+.card h4{font-family:var(--f-display);font-size:.95rem;margin:0;font-weight:700;}
+.card p{font-size:.95rem;color:var(--ink-2);}
+
+footer{
+  border-top:1.5px solid var(--line-strong);margin-top:2rem;padding-top:1.5rem;
+  font-size:.85rem;color:var(--ink-2);display:flex;flex-direction:column;gap:.6rem;
+}
+footer a{color:var(--ink-2);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+@media (max-width:720px){
+  section{grid-template-columns:1fr;gap:1rem;padding:2rem 0;}
+  .rail{flex-direction:row;align-items:baseline;gap:.6rem;}
+  body{font-size:16px;}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+
+<div class="wrap">
+
+<header class="titleblock">
+  <div class="titleblock-main">
+    <div class="eyebrow">Initial business plan · working title</div>
+    <h1>Sitewire<span class="thin">Jobsite AI that counts what the crew installed — and proves what it wasn't paid for.</span></h1>
+    <p class="deck">Production intelligence for mid-market specialty subcontractors. Every funded jobsite-AI company sells visibility <em>into</em> the sub's work, to the general contractor. Nobody sells it to the sub — the party that carries the labor risk, eats the rework, and loses the change-order argument for lack of evidence.</p>
+  </div>
+  <div class="fields">
+    <div class="field"><span class="k">Revision</span><span class="v">v0.1</span></div>
+    <div class="field"><span class="k">Date</span><span class="v">Aug 2026</span></div>
+    <div class="field"><span class="k">Stage</span><span class="v">Pre-seed</span></div>
+    <div class="field"><span class="k">Indicative raise</span><span class="v">$2.5M</span></div>
+    <div class="field"><span class="k">Status</span><span class="v">Unvalidated</span></div>
+  </div>
+</header>
+
+<section>
+  <div class="rail"><span class="num">01</span><span>Thesis</span></div>
+  <div class="body">
+    <h2>Subs measure hours precisely and installed quantity not at all</h2>
+    <p>A specialty sub bids a job as quantity × labor productivity: <em>N</em> linear feet of conduit at <em>X</em> hours per hundred. Everything after the bid is a race between what was assumed and what actually happens. The sub tracks one side of that ratio to the penny — payroll — and the other side not at all.</p>
+    <p>So a job that's going to lose 400 hours announces itself in week three and is discovered in week eight, when the recoverable window has already closed. And when the money argument starts, the GC's version of site conditions is better-evidenced than the sub's.</p>
+    <div class="pull">Sitewire turns the photos crews already take into installed-quantity tracking, joins it to their labor hours and bid rates, and assembles the evidence package that gets the out-of-scope work paid for.</div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">02</span><span>At a glance</span></div>
+  <div class="body wide">
+    <div class="tiles">
+      <div class="tile"><span class="k">Reachable market</span><span class="v">~$1.1B</span><span class="n">~18,000 US self-performing subs, $10–150M revenue × $60K blended ACV</span></div>
+      <div class="tile"><span class="k">Land ACV</span><span class="v">$16.8K</span><span class="n">4-project pilot, expanding to ~$76K at 18 concurrent projects</span></div>
+      <div class="tile"><span class="k">18-month target</span><span class="v">$600K</span><span class="n">ARR across 14 paying subcontractors, 2 trades, 1–2 metros</span></div>
+      <div class="tile"><span class="k">Rework drag</span><span class="v">5–12%</span><span class="n">of project cost — direct, rising to loaded, much of it caused by others and never billed back</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">03</span><span>Product</span></div>
+  <div class="body">
+    <h2>One loop, five steps</h2>
+    <p>No new hardware. No 360° rig, no drone, no BIM model — deliberate constraints, because our buyer has none of those things and our competitors all require at least one.</p>
+    <div class="steps">
+      <div class="step"><span class="s">01</span><span class="t">Capture</span><span class="d">Crews shoot photos and 30-second walk videos on the phone in their pocket — or we ingest the photo stream already flowing into Procore or Autodesk Build.</span></div>
+      <div class="step"><span class="s">02</span><span class="t">Extract</span><span class="d">Vision models estimate installed quantities against the bid's scope items, locate them by area, and flag conditions worth remembering: blocked access, stacked trades, unfinished predecessor work, damage.</span></div>
+      <div class="step"><span class="s">03</span><span class="t">Reconcile</span><span class="d">Installed quantity joins that day's labor hours and the bid's budgeted units-per-hour. Output: a productivity factor per scope item, per crew, per day.</span></div>
+      <div class="step"><span class="s">04</span><span class="t">Alert</span><span class="d">"Level 2 branch conduit has run at 0.71 of bid productivity for six working days. At this rate the scope finishes 320 hours over. Top correlated condition: ceiling grid installed ahead of rough-in in 4 of 6 areas."</span></div>
+      <div class="step"><span class="s">05</span><span class="t">Document</span><span class="d">When a condition is billable, the system assembles a dated, geolocated, photo-backed evidence package in the shape the change order or delay claim needs.</span></div>
+    </div>
+    <p>Step 5 is what gets us renewed. Steps 3–4 are what make us hard to replace.</p>
+
+    <h3>v1 scope — nine months, two trades</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>In</th><th>Out, deliberately</th></tr></thead>
+        <tbody>
+          <tr><td>Mobile capture + Procore / Autodesk photo sync</td><td>360° rigs, drones, laser scanning</td></tr>
+          <tr><td>Quantity models for electrical rough-in and concrete placement</td><td>Every trade</td></tr>
+          <tr><td>Timekeeping joins (Procore, Foundation, Vista, Rhumbix)</td><td>Full ERP write-back</td></tr>
+          <tr><td>Auto-drafted daily reports</td><td>Schedule / P6 integration</td></tr>
+          <tr><td>Productivity-vs-bid dashboard, weekly ops digest</td><td>Owner- or GC-facing portal</td></tr>
+          <tr><td>Change-order evidence export</td><td>Automated claim submission</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Two trades, not ten. Quantity models are trade-specific, and credibility with a $40M electrical contractor requires being <em>right</em>, not broad.</p>
+
+    <div class="callout">
+      <span class="lbl">Trust commitments in v1</span>
+      <ul>
+        <li>Every number traces back to the photos that produced it, in one click.</li>
+        <li>The model reports a confidence band and <em>abstains</em> rather than guessing — an abstention is a 30-second nudge to the foreman, never a silent bad number.</li>
+        <li>Any quantity is correctable in one tap, and corrections are the training signal. Corrections-per-week is our core quality metric and must fall month over month per customer.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">04</span><span>Customer</span></div>
+  <div class="body">
+    <h2>The mid-market specialty sub</h2>
+    <div class="split">
+      <div class="card"><h4>Firm</h4><p>US specialty trade subcontractor, $10–150M revenue, 8–40 concurrent projects, self-performing labor, commercial / institutional / industrial.</p></div>
+      <div class="card"><h4>Economic buyer</h4><p>VP of Operations or President. At this size that person still knows every job by name and personally feels a losing one.</p></div>
+      <div class="card"><h4>Champion</h4><p>Chief Estimator or Director of PM — owns the bid productivity rates we measure against, and has wanted this feedback loop their entire career.</p></div>
+      <div class="card"><h4>Users</h4><p>Foreman, 30 seconds a day of capture. PM, five minutes a day of reading.</p></div>
+    </div>
+    <p><strong>Disqualified:</strong> brokers who don't self-perform; residential production builders; firms under ~$8M with no PM layer; firms whose GC mandates a competing platform <em>and</em> whose contracts strip change-order rights.</p>
+
+    <h3>Why they buy — in the order that actually closes deals</h3>
+    <ol>
+      <li>"You found $180K of billable out-of-scope work on one job that we would have eaten." Pays for itself, undeniably.</li>
+      <li>"You told us job 24-118 was going sideways in week three." The ops leader's recurring nightmare.</li>
+      <li>"Our foremen stopped writing daily reports and the reports got better." Adoption lubricant, not a purchase reason.</li>
+    </ol>
+
+    <h3>Why they don't</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Objection</th><th>Answer</th></tr></thead>
+        <tbody>
+          <tr><td>"My foremen won't use it."</td><td>30 seconds, on the phone they already hold, and the daily report writes itself. If pilot capture falls below 70% of crew-days, we failed and we say so.</td></tr>
+          <tr><td>"We already have Procore."</td><td>Procore stores your photos. It doesn't count what's in them or tell you your productivity factor. We ride on top of it.</td></tr>
+          <tr><td>"Our GC will use this against us."</td><td>The data is yours. There is no GC-facing product, by design — that's positioning as much as policy.</td></tr>
+          <tr><td>"AI can't count my conduit."</td><td>Correct, in general. It can in the two trades we've trained on — here's the accuracy report from the last four pilots.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">05</span><span>Competition</span></div>
+  <div class="body wide">
+    <h2>Why we're not roadkill</h2>
+    <div class="body" style="margin-bottom:1.1rem"><p>The reality-capture category is well capitalized and largely won at the GC and owner tier — Buildots raised a $45M Series D, Trunk Tools $30.5M, Fyld $41M. We are not attacking it. We're arguing the sub is a <em>separate market</em>: separate buyer, separate data (labor hours and bid units, which the GC never sees), separate value event.</p></div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Player</th><th>Sells to</th><th>Capture</th><th>Their answer</th><th>Our angle</th></tr></thead>
+        <tbody>
+          <tr><td>OpenSpace</td><td>GC / owner</td><td>360° rig</td><td>Reality capture, visual record</td><td>No rig needed; we join to <em>their</em> hours and bid units</td></tr>
+          <tr><td>Buildots</td><td>GC / owner</td><td>Helmet cam</td><td>Progress vs. BIM schedule</td><td>Requires BIM + full schedule; subs have neither</td></tr>
+          <tr><td>Procore / Autodesk</td><td>GC (+ subs)</td><td>Photo storage</td><td>System of record</td><td>Platforms, not measurement — we integrate</td></tr>
+          <tr><td>Doxel / Disperse / Avvir</td><td>Owner / GC</td><td>Scans, BIM</td><td>Capital-project verification</td><td>Enterprise motion; wrong shape for a $40M sub</td></tr>
+          <tr><td>Trunk Tools</td><td>GC</td><td>Documents</td><td>Agents over project docs</td><td>Adjacent — plausible partner or acquirer</td></tr>
+          <tr><td>Safety-vision vendors</td><td>Enterprise EHS</td><td>Fixed cameras</td><td>PPE, zone violations</td><td>Different buyer and budget; we don't lead with safety</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="body" style="margin-top:1.4rem">
+      <h3>Defensibility, ranked by how much we actually believe it</h3>
+      <ol>
+        <li><strong>Data.</strong> Installed quantity ↔ labor hours ↔ bid rate, by trade, across firms. Nobody else has both sides of that ratio, because nobody else sells to the party that owns both. Compounds, genuinely hard to copy.</li>
+        <li><strong>Workflow lock.</strong> Once change orders are documented in our format and estimators tune bid rates against our history, we're inside the annual planning cycle.</li>
+        <li><strong>Trust in the trade.</strong> Subcontracting is a referral market. Ten happy electrical contractors in one metro beats a hundred scattered logos.</li>
+        <li><strong>Model quality.</strong> Real, but a depreciating asset. We should not tell ourselves this is the moat.</li>
+      </ol>
+      <p><strong>Where we lose:</strong> if Procore ships adequate quantity extraction as a bundled feature before we own the ratio dataset. Mitigation is speed and depth in two trades — and being an obvious acquisition rather than an obstacle.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">06</span><span>Pricing</span></div>
+  <div class="body">
+    <h2>Per active project, not per seat</h2>
+    <p>Seat pricing punishes the customer for putting more crew on capture — exactly the behavior our data quality depends on. Project pricing scales with delivered value and matches how a sub already thinks about cost coding.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Tier</th><th class="num">Price</th><th>Includes</th></tr></thead>
+        <tbody>
+          <tr><td>Pilot</td><td class="num">$12K / 90 days</td><td>Up to 4 projects, full product, accuracy report, exit review — refundable against year one</td></tr>
+          <tr><td>Core</td><td class="num">$350 / project / mo</td><td>Production tracking, daily reports, alerts, one trade model</td></tr>
+          <tr><td>Plus</td><td class="num">$525 / project / mo</td><td>+ change-order evidence packages, multi-trade, bid-rate feedback to estimating, API</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <span class="lbl">Explicitly not doing</span>
+      <p>Contingency pricing on recovered change orders. It's the pricing the value story begs for, and it makes us a claims-consulting firm with software attached — unsellable multiple, adversarial relationship with the GC ecosystem, compliance mess in some states. Revisit only with counsel.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">07</span><span>Go to market</span></div>
+  <div class="body">
+    <h2>Founder-led, trade-vertical, metro-dense</h2>
+    <p>Not PLG. Not inside sales at this stage. The motion compounds through referral inside one trade in one metro before it goes anywhere else.</p>
+    <div class="steps">
+      <div class="step"><span class="s">M0</span><span class="t">Design partners — months 0–6</span><span class="d">Six subs, one metro, two trades. Free-to-cheap in exchange for capture access, labor data, and brutal weekly feedback. Success = 70%+ crew-day capture and one documented dollar recovery per partner.</span></div>
+      <div class="step"><span class="s">M6</span><span class="t">Paid pilots — months 6–12</span><span class="d">Convert design partners; add 10–12 paid pilots in the same metro and trade. Every pilot ends in a written accuracy-and-value review — that document is the sales asset for the next ten.</span></div>
+      <div class="step"><span class="s">M12</span><span class="t">Metro expansion — months 12–24</span><span class="d">Second and third metro, third trade, first two AEs hired from the trade rather than from SaaS. Association speaking, trade-press cases, and an annual Subcontractor Productivity Benchmark built from our own dataset.</span></div>
+    </div>
+    <p><strong>Channel bets worth testing, not building on:</strong> timekeeping vendors as referral partners; regional NECA / ABC chapters; construction accounting firms and surety brokers, who are structurally interested in their clients not losing money on jobs.</p>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">08</span><span>Financials</span></div>
+  <div class="body wide">
+    <h2>$2.5M for 18 months to a seed-worthy metric set</h2>
+    <div class="split">
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Use of funds</th><th class="num">Share</th></tr></thead>
+          <tbody>
+            <tr><td>Engineering — 4 FTE incl. 2 ML</td><td class="num">55%</td></tr>
+            <tr><td>Field / customer — 1 construction-native FTE</td><td class="num">15%</td></tr>
+            <tr><td>Founders — below market</td><td class="num">15%</td></tr>
+            <tr><td>Compute + trade-specific labeling</td><td class="num">8%</td></tr>
+            <tr><td>G&amp;A, legal, E&amp;O insurance</td><td class="num">7%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Base case</th><th class="num">M6</th><th class="num">M12</th><th class="num">M18</th><th class="num">M24</th></tr></thead>
+          <tbody>
+            <tr><td>Customers</td><td class="num">0</td><td class="num">6</td><td class="num">14</td><td class="num">30</td></tr>
+            <tr><td>ARR</td><td class="num">—</td><td class="num">$180K</td><td class="num">$600K</td><td class="num">$1.6M</td></tr>
+            <tr><td>Gross margin</td><td class="num">—</td><td class="num">55%</td><td class="num">68%</td><td class="num">75%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="body" style="margin-top:1.3rem">
+      <p>Early gross margin is deliberately poor: inference cost per project-day plus human QA on quantity extraction. <strong>The margin curve is the technical milestone.</strong> If QA cost per project doesn't halve between M12 and M24, the model isn't learning and we're a services firm.</p>
+      <div class="callout">
+        <span class="lbl">Metrics that decide the seed</span>
+        <p>Net revenue retention above 120% via project expansion · crew-day capture above 70% · quantity accuracy within ±10% on trained scope items · corrections-per-project-week trending down · documented dollar recovery per account.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">09</span><span>Risks</span></div>
+  <div class="body wide">
+    <h2>What kills this</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation / kill criterion</th></tr></thead>
+        <tbody>
+          <tr><td>Quantity extraction isn't accurate enough from ad-hoc photos</td><td><span class="pill crit">Existential</span></td><td>8-week spike on real jobsite photos before any raise. <strong>Kill</strong> if we can't hit ±15% on one trade with human-corrected capture.</td></tr>
+          <tr><td>Foremen don't capture</td><td><span class="pill crit">Existential</span></td><td>Measured directly in the design-partner phase. <strong>Kill or pivot</strong> if crew-day capture stays under 50% after 8 weeks with an engaged partner.</td></tr>
+          <tr><td>Procore or Autodesk bundles it</td><td><span class="pill high">High</span></td><td>Depth in two trades, own the hours↔quantity dataset, stay acquirable</td></tr>
+          <tr><td>Labor-hours data dirtier than assumed — cost coding varies firm to firm</td><td><span class="pill high">High</span></td><td>Validate against real exports from three firms in month one; may require a normalization layer we haven't scoped</td></tr>
+          <tr><td>Sales cycle longer than modeled</td><td><span class="pill med">Medium</span></td><td>Pilot pricing exists to compress it; watch pilot→paid conversion, not pipeline</td></tr>
+          <tr><td>Our data used against the customer in discovery or dispute</td><td><span class="pill med">Medium</span></td><td>Counsel early; explicit ownership and retention terms. This is a trust market.</td></tr>
+          <tr><td>Two-trade focus caps the market before the seed</td><td><span class="pill med">Medium</span></td><td>Third trade sequenced in Y2 H1 — a plan input, not a discovery</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="body" style="margin-top:1.3rem">
+      <div class="pull">This business is one technical bet — can we count installed work from a foreman's phone? — and one behavioral bet: will he take the photo? Neither is settled by argument. Both are cheap to test.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">10</span><span>Next 90 days</span></div>
+  <div class="body">
+    <h2>Validation before building</h2>
+    <div class="steps">
+      <div class="step"><span class="s">1–30</span><span class="t">Is the problem worth money?</span><span class="d">25 structured discovery calls with VPs of Ops at ICP subs — how many hours a year do they lose to late-detected drift, and how many change orders did they abandon for lack of evidence in the last 12 months? Obtain real photo sets, matching labor cost reports, and bid takeoffs from three firms under NDA. Replace the 18,000-firm estimate with a real firmographic pull.</span></div>
+      <div class="step"><span class="s">31–60</span><span class="t">Can the model do it?</span><span class="d">Quantity estimation spike on those real photo sets, one trade, measured against as-built quantities — accuracy reported honestly, abstention rate included. Prototype the hours↔quantity join on one firm's actual cost codes and find out how dirty the data really is.</span></div>
+      <div class="step"><span class="s">61–90</span><span class="t">Will anyone pay?</span><span class="d">Three signed design-partner LOIs including data terms. One paid pilot commitment at $12K, contingent on the accuracy threshold. Go / no-go against the kill criteria — written down and honored.</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="rail"><span class="num">11</span><span>Open</span></div>
+  <div class="body">
+    <h2>Questions we haven't answered</h2>
+    <ol>
+      <li><strong>Trade choice.</strong> Electrical + concrete is a guess. Electrical has the best quantity structure and the worst rough-in visibility; concrete is the most visually tractable but the shortest scope duration. Mechanical piping may beat both. Decide with discovery data, not preference.</li>
+      <li><strong>Do we need the bid takeoff?</strong> The ratio needs budgeted units. If subs won't share takeoffs early, we need a cold-start path — crew-relative trending instead of bid-relative.</li>
+      <li><strong>Where does safety fit?</strong> Easiest thing to detect, hardest thing to charge a sub for. Probably a retention feature, never the wedge.</li>
+      <li><strong>Buy or build the capture app?</strong> A thin layer on an existing capture SDK may beat building our own for twelve months.</li>
+      <li><strong>Is the GC eventually the better buyer anyway?</strong> Hold it open and let pilot economics answer, rather than defending the sub thesis past the point of evidence.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p>Figures marked as estimates are assumptions pending §10 validation. Market and funding references: <a href="https://www.mordorintelligence.com/industry-reports/construction-management-software-market">Mordor Intelligence</a> · <a href="https://news.fundsforngos.org/2026/05/21/construction-tech-funding-rounds-may-2026-ai-and-automation-startups-attract-fresh-capital/">construction tech funding, 2026</a> · <a href="https://www.asce.org/publications-and-news/civil-engineering-source/article/2026/01/22/how-much-does-field-rework-in-construction-actually-cost">ASCE on field rework cost</a> · <a href="https://www.openspace.ai/blog/cost-of-rework-in-construction/">OpenSpace rework data</a> · <a href="https://www.bls.gov/opub/btn/volume-12/nonresidential-building-construction-overhead-and-profit-markups.htm">U.S. BLS markup data</a>.</p>
+  <p>Sitewire is a working title. v0.1 — August 2026.</p>
+</footer>
+
+</div>
