@@ -4,7 +4,7 @@ Project repo for a jobsite AI product sold to **Canadian specialty trade subcont
 
 Working title: **Sitewire**.
 
-Right now this repo holds the business plan. Application code lands here too, at the root, when the build starts.
+Right now this repo holds the business plan and the technical implementation plan that follows from it. Application code lands here too, at the root, when the build starts.
 
 ## Layout
 
@@ -12,6 +12,9 @@ Right now this repo holds the business plan. Application code lands here too, at
 README.md          this file
 docs/              planning and reference documents
   business-plan.md   the plan — strategy, market, pricing, GTM, financials, risks
+  technical-implementation-plan.md
+                     the v1 system design — architecture, data model, ML pipeline,
+                     privacy checklist, milestones (companion to the business plan)
   sitewire-plan.html source for the shareable one-page version
 ```
 
@@ -36,6 +39,8 @@ The commit history tracks how the strategy changed:
 3. **Social** — will a unionized workforce accept it?
 
 None is settled by argument. All three are cheap to test, and the 90-day plan tests them before anything gets built. **Don't start the app before the technical spike reports its accuracy honestly** — the whole product rests on that number.
+
+The technical plan describes what gets built *after* that number comes back, and it carries its own open questions (§13) — cloud provider, trade choice, abstention threshold, BC adjudication format. Those are founder decisions, not engineering defaults; the plan marks them **[DECIDE]** rather than resolving them.
 
 ## Secrets
 

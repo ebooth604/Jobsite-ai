@@ -394,6 +394,12 @@ Early gross margin is deliberately poor: inference cost per project-day plus hum
 
 ---
 
+## Companion document
+
+The engineering translation of §4 and §13 — system architecture, data model, ML pipeline, privacy/residency implementation checklist, and a quarter-by-quarter engineering breakdown — lives in [technical-implementation-plan.md](technical-implementation-plan.md). It mirrors §17's open questions as engineering decisions rather than resolving them.
+
+---
+
 ## Sources
 
 - [Canadian Industry Statistics — Specialty trade contractors (NAICS 238), business counts by size and province — ISED](https://ised-isde.canada.ca/app/ixb/cis/businesses-entreprises/238)
