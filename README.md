@@ -4,7 +4,7 @@ Project repo for a jobsite AI product sold to **Canadian specialty trade subcont
 
 Working title: **Sitewire**.
 
-Right now this repo holds the business plan and the technical implementation plan that follows from it. Application code lands here too, at the root, when the build starts.
+This repo holds the business plan, the technical implementation plan that follows from it, and the directory skeleton those plans describe. The skeleton is structure only — every service directory carries a README naming what it will own and which commitments bind it, and no application code yet.
 
 ## Layout
 
@@ -16,13 +16,41 @@ docs/              planning and reference documents
                      the v1 system design — architecture, data model, ML pipeline,
                      privacy checklist, milestones (companion to the business plan)
   sitewire-plan.html source for the shareable one-page version
+apps/              user-facing applications
+  mobile/            React Native capture app for foremen
+  dashboard/         PM/ops web dashboard
+services/          backend services
+  ingestion/         capture intake, face blur, dedupe
+  quantity-ml/       Python — CV models, confidence, abstention
+  reconciliation/    quantity + hours + bid rate → productivity factor
+  alerting/          drift detection, correlated conditions
+  evidence/          change-order and adjudication package generation
+  integrations/      Procore, Autodesk, Jonas, Vista, Rhumbix adapters
+  notifications/     weekly digest, in-app alerts
+packages/          shared libraries
+  shared-types/      cross-service types and schemas
+  ui-components/     shared dashboard components
+infra/             IaC, CI/CD, environment config
 ```
 
-Application code goes at the root when the time comes (`src/`, `package.json`, and so on), leaving `docs/` as the planning record alongside it.
+The layout follows technical plan §10. `docs/` stays alongside the code as the
+planning record.
+
+**Every directory is a stub.** Each README states what that piece will own and
+which constraints bind it — face blur before persistent storage, no worker-level
+aggregation anywhere in the schema, Canadian residency, simulated data barred from
+measurement. Writing those down before the code exists is the point: they are
+contractual commitments, and they are cheaper to honour by design than to retrofit.
+
+Two things are deliberately absent. There is no root `package.json`, workspace
+config, or build tooling, because technical plan §3 leaves the final stack call to
+the technical founder. And `infra/` is empty of IaC, because the AWS vs. Azure
+choice (§13.4) shapes IAM, networking, and SR&ED spend tracking — scaffolding one
+provider would quietly make that decision.
 
 ## Status
 
-**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. No code yet.**
+**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. Directory skeleton only, no code yet.**
 
 Everything in the plan is an assumption until the 90-day validation plan (§16) marks it otherwise. Figures labelled as estimates are estimates; market counts drawn from the ISED business register are cited as such.
 
