@@ -2,7 +2,7 @@
 
 **Working title. Initial business plan, v0.3 — August 2026.**
 **Based in Vancouver, British Columbia. Canadian market only.** All figures CAD.
-Status: pre-seed / pre-incorporation. This document is a decision-making artifact, not a pitch deck. Everything below is an assumption until the validation plan in §14 marks it otherwise.
+Status: pre-seed / pre-incorporation. This document is a decision-making artifact, not a pitch deck. Everything below is an assumption until the validation plan in §16 marks it otherwise.
 
 ---
 
@@ -70,7 +70,7 @@ Three consequences worth being explicit about, because they shape the plan:
 
 ### 3.3 The honest counterweight
 
-Adjudication is our sharpest "why now" and our sharpest single point of failure. If BC's uptake is slow — if subs use the regime rarely, or if the regulations make it less accessible than expected — the evidence package reverts to being a change-order tool with ordinary, non-urgent value. That's survivable, not fatal: the productivity half of the product stands on its own. But it would cost us the wedge, and we should know it early rather than defend it late. §14 puts a lawyer conversation in the first 60 days for exactly this reason.
+Adjudication is our sharpest "why now" and our sharpest single point of failure. If BC's uptake is slow — if subs use the regime rarely, or if the regulations make it less accessible than expected — the evidence package reverts to being a change-order tool with ordinary, non-urgent value. That's survivable, not fatal: the productivity half of the product stands on its own. But it would cost us the wedge, and we should know it early rather than defend it late. §16 puts a lawyer conversation in the first 60 days for exactly this reason.
 
 ---
 
@@ -241,7 +241,7 @@ Canada has 62,023 micro (1–4 employees), 38,279 small (5–99), 929 medium (10
 
 **ACV build (a $40M electrical sub):** 18 concurrent projects × $475/project/month = $102K/yr. Land smaller — a 4-project pilot is $22.8K/yr — and expand on renewal. Blended across the ICP band: **$80K**.
 
-**Two honest notes on this table.** The medium/large counts are real; the "upper slice of small" column is my estimate of how many 5–99-employee firms clear $10M in revenue, and it carries most of the uncertainty. And this supersedes the cruder figures in v0.1–v0.2 — the earlier BC number was materially too low. §14 replaces the estimated column with a StatCan revenue-band pull.
+**Two honest notes on this table.** The medium/large counts are real; the "upper slice of small" column is my estimate of how many 5–99-employee firms clear $10M in revenue, and it carries most of the uncertainty. And this supersedes the cruder figures in v0.1–v0.2 — the earlier BC number was materially too low. §16 replaces the estimated column with a StatCan revenue-band pull.
 
 ---
 
