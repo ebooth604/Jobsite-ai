@@ -12,6 +12,7 @@ Right now this repo holds the business plan. Application code lands here too, at
 README.md          this file
 docs/              planning and reference documents
   business-plan.md   the plan — strategy, market, pricing, GTM, financials, risks
+  decisions.md       why the plan is shaped this way, and what would reverse each call
   sitewire-plan.html source for the shareable one-page version
 ```
 
