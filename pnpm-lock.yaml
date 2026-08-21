@@ -20,6 +20,8 @@ importers:
 
   packages/shared-types: {}
 
+  services/reconciliation: {}
+
 packages:
 
   '@biomejs/biome@2.5.9':

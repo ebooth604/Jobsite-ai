@@ -34,6 +34,9 @@ coverage/
 *.onnx
 data/raw/
 data/interim/
+# Labelled sets contain photographs of real worksites. They belong in the
+# Canadian-region object store with access controls, never in git.
+services/quantity-ml/data/
 
 # Editor / OS
 .DS_Store

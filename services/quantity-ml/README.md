@@ -34,7 +34,31 @@ capture, plus the condition-detection head that feeds alerting.
 Trade choice (electrical + forming vs. mechanical piping) and the Q1 self-measured
 site budget are unresolved founder decisions — technical plan §13.1 and §13.6.
 
+## What exists now
+
+`src/quantity_ml/evaluation/` — the accuracy harness, which is phase 0 and
+therefore the one part of this service that should exist before the models do.
+
+```bash
+uv run python -m quantity_ml.evaluation --dataset data/electrical_roughin_v1.jsonl
+```
+
+It reports coverage and abstention rate alongside error, so a model that scored
+well by answering only the easy frames cannot look accurate. It refuses to score
+a set containing a `simulated` capture — a hard failure, because a leaked sample
+makes every number in the report meaningless while still looking plausible. And
+it ships with a baseline that ignores the photographs entirely, guessing from the
+bid rate alone: the number a real estimator has to beat before anyone can claim
+the photographs carry signal.
+
+Exit codes: `0` meets the bar, `1` below it, `2` bad dataset, `3` leak detected.
+
+**It has no data.** The harness needs three firms' photo sets with matching
+as-built quantities and bid takeoffs, under NDA. There is deliberately no
+synthetic-sample generator — fabricating samples would only measure our own
+assumptions.
+
 ## Status
 
-Not started, and deliberately so: the README's rule is that the app does not begin
-before the technical spike reports its accuracy honestly.
+**No models, and deliberately so:** the app does not begin before the spike
+reports its accuracy honestly. The harness that will report it is ready.

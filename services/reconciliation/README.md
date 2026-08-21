@@ -23,6 +23,25 @@ factor per scope item, per crew, per day.
 - Dirty or unmapped cost codes are surfaced, not silently joined into a factor
   (§11).
 
+## What exists now
+
+`src/productivity.ts` — the factor arithmetic as pure functions, with tests. No
+I/O, so it can be exercised against real bid numbers during discovery calls
+before any database exists. It covers:
+
+- `computeProductivityFactor` — budgeted rate, actual rate, factor, and the
+  projected overrun the alert quotes
+- `assessWindow` — reduces a window of estimates to the quantity that may feed a
+  factor, excluding abstentions and low-confidence estimates rather than
+  counting them as zero
+- `detectDrift` — the sustained-trend rule, which returns nothing far more often
+  than it fires
+
+Both modes from §13.2 are designed in: pass `bidHours` for bid-relative, omit it
+for the crew-relative cold-start path.
+
 ## Status
 
-Not started. Q2 deliverable.
+**The join is not built.** `QuantityEstimate ⋈ LabourHoursRecord ⋈ ScopeItem`,
+the persistence of `ProductivityFactor` rows, and the dirty-cost-code refusal are
+Q2 work. Only the arithmetic those will call exists today.
