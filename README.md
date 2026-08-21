@@ -16,6 +16,7 @@ docs/              planning and reference documents
   technical-implementation-plan.md
                      the v1 system design — architecture, data model, ML pipeline,
                      privacy checklist, milestones (companion to the business plan)
+  decisions.md       why the plan is shaped this way, and what would reverse each call
   sitewire-plan.html source for the shareable one-page version
 apps/              user-facing applications
   mobile/            React Native capture app for foremen
