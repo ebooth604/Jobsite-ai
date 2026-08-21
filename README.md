@@ -4,23 +4,84 @@ Project repo for a jobsite AI product sold to **Canadian specialty trade subcont
 
 Working title: **Sitewire**.
 
-Right now this repo holds the business plan. Application code lands here too, at the root, when the build starts.
+This repo holds the business plan, the technical implementation plan that follows from it, and the directory skeleton those plans describe. The skeleton is structure only — every service directory carries a README naming what it will own and which commitments bind it, and no application code yet.
 
 ## Layout
 
 ```
 README.md          this file
 docs/              planning and reference documents
+  adr/               architecture decision records — what was defaulted, and why
   business-plan.md   the plan — strategy, market, pricing, GTM, financials, risks
+  technical-implementation-plan.md
+                     the v1 system design — architecture, data model, ML pipeline,
+                     privacy checklist, milestones (companion to the business plan)
   decisions.md       why the plan is shaped this way, and what would reverse each call
   sitewire-plan.html source for the shareable one-page version
+apps/              user-facing applications
+  mobile/            React Native capture app for foremen
+  dashboard/         PM/ops web dashboard
+services/          backend services
+  ingestion/         capture intake, face blur, dedupe
+  quantity-ml/       Python — CV models, confidence, abstention
+  reconciliation/    quantity + hours + bid rate → productivity factor
+  alerting/          drift detection, correlated conditions
+  evidence/          change-order and adjudication package generation
+  integrations/      Procore, Autodesk, Jonas, Vista, Rhumbix adapters
+  notifications/     weekly digest, in-app alerts
+packages/          shared libraries
+  shared-types/      cross-service types and schemas
+  ui-components/     shared dashboard components
+infra/             IaC, CI/CD, environment config
 ```
 
-Application code goes at the root when the time comes (`src/`, `package.json`, and so on), leaving `docs/` as the planning record alongside it.
+The layout follows technical plan §10. `docs/` stays alongside the code as the
+planning record.
+
+**Every directory is a stub.** Each README states what that piece will own and
+which constraints bind it — face blur before persistent storage, no worker-level
+aggregation anywhere in the schema, Canadian residency, simulated data barred from
+measurement. Writing those down before the code exists is the point: they are
+contractual commitments, and they are cheaper to honour by design than to retrofit.
+
+## Toolchain
+
+Working defaults, each recorded in an ADR that says why it was chosen and what
+reversing it costs. None of these is a settled founder decision — they are picked so
+the build can start, and `docs/adr/` says so plainly.
+
+| Layer | Choice | ADR |
+|---|---|---|
+| Workspace | pnpm workspaces, Node 22 | [0002](docs/adr/0002-monorepo-tooling.md) |
+| TypeScript | TS 7, strict, project references | [0002](docs/adr/0002-monorepo-tooling.md) |
+| Lint + format | Biome (one tool, one config) | [0002](docs/adr/0002-monorepo-tooling.md) |
+| TS tests | Vitest | [0002](docs/adr/0002-monorepo-tooling.md) |
+| Python | uv, Ruff, pytest | [0003](docs/adr/0003-python-toolchain.md) |
+| Cloud | AWS `ca-central-1` (Montreal) | [0001](docs/adr/0001-cloud-provider.md) |
+
+```
+pnpm install
+pnpm check                                  # typecheck + lint + test
+cd services/quantity-ml && uv sync && uv run pytest
+```
+
+CI runs exactly these commands, as two independent jobs.
+
+**The cloud choice is the one worth a founder's attention before it hardens.**
+Reversing ADR-0001 costs nothing today and a great deal once IAM, networking, and
+buckets exist. `infra/terraform` currently holds provider config, version pins, and
+a region guard that rejects any non-`ca-*` region — residency enforced at plan time
+rather than trusted to a default.
+
+Two workspace members exist so far, and only to prove the toolchain resolves end to
+end: `packages/shared-types` (holding `CaptureOrigin`, the type the accuracy harness
+uses to keep simulated captures out of measurement) and `services/quantity-ml`
+(holding `should_abstain`, which takes its threshold as an argument rather than
+hard-coding it). Everything else is still a README.
 
 ## Status
 
-**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. No code yet.**
+**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. Skeleton and toolchain only — no product code yet.**
 
 Everything in the plan is an assumption until the 90-day validation plan (§16) marks it otherwise. Figures labelled as estimates are estimates; market counts drawn from the ISED business register are cited as such.
 
@@ -37,6 +98,8 @@ The commit history tracks how the strategy changed:
 3. **Social** — will a unionized workforce accept it?
 
 None is settled by argument. All three are cheap to test, and the 90-day plan tests them before anything gets built. **Don't start the app before the technical spike reports its accuracy honestly** — the whole product rests on that number.
+
+The technical plan describes what gets built *after* that number comes back, and it carries its own open questions (§13) — cloud provider, trade choice, abstention threshold, BC adjudication format. Those are founder decisions, not engineering defaults; the plan marks them **[DECIDE]** rather than resolving them.
 
 ## Secrets
 
