@@ -45,3 +45,9 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Jobsite media and labelled sets — never commit photos of real worksites.
+# See docs/decisions.md §9: this data belongs in a Canadian-region object
+# store with access controls, not in git.
+spike/data/
+spike/.venv/

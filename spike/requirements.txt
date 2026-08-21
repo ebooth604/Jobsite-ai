@@ -1,0 +1,4 @@
+# Deliberately minimal. Add a vision stack when there is a real estimator to
+# run; the harness itself should stay dependency-light so it never becomes
+# the reason a spike is slow to start.
+numpy>=1.26

@@ -4,23 +4,38 @@ Project repo for a jobsite AI product sold to **Canadian specialty trade subcont
 
 Working title: **Sitewire**.
 
-Right now this repo holds the business plan. Application code lands here too, at the root, when the build starts.
+The repo holds the business plan and a scaffold: the domain model, the API skeleton, the database schema, and the phase-0 accuracy harness. **The product is not built and should not be** until the spike in `spike/` reports honestly — see `docs/architecture.md` §8.
 
 ## Layout
 
 ```
-README.md          this file
+README.md
+apps/api/          core API — TypeScript, node:http for now
+packages/domain/   the domain model and the productivity calculation
+db/migrations/     Postgres schema
+spike/             phase 0 — the accuracy harness. Build this first.
 docs/              planning and reference documents
   business-plan.md   the plan — strategy, market, pricing, GTM, financials, risks
   decisions.md       why the plan is shaped this way, and what would reverse each call
+  architecture.md    how the system is put together, and the build order
   sitewire-plan.html source for the shareable one-page version
 ```
 
-Application code goes at the root when the time comes (`src/`, `package.json`, and so on), leaving `docs/` as the planning record alongside it.
+## Working on it
+
+```bash
+npm install
+npm run build --workspace @jobsite/domain   # domain must build before the API typechecks
+npm test                                    # domain unit tests
+npm run typecheck
+npm run dev:api                             # then: curl localhost:3000/health
+```
+
+The one endpoint with real logic today is `/productivity` — the arithmetic works with no database and no model, so you can exercise it against real bid numbers during discovery calls. Everything else returns 501 by design; a stub that returns plausible data is how a team convinces itself something works.
 
 ## Status
 
-**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. No code yet.**
+**Plan at v0.3 — August 2026. Pre-seed, pre-incorporation, unvalidated. Scaffold only — no working product.**
 
 Everything in the plan is an assumption until the 90-day validation plan (§16) marks it otherwise. Figures labelled as estimates are estimates; market counts drawn from the ISED business register are cited as such.
 
