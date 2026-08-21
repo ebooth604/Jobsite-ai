@@ -1,0 +1,15 @@
+export {
+  assessWindow,
+  computeProductivityFactor,
+  DEFAULT_ALERT_BELOW_FACTOR,
+  DEFAULT_MIN_CONFIDENCE,
+  DEFAULT_TREND_WINDOW_DAYS,
+  type DriftAlert,
+  detectDrift,
+  type ProductivityFactorInput,
+  type ProductivityFactorResult,
+  type ScoreableEstimate,
+  type TrendOptions,
+  UnusableBidError,
+  type WindowAssessment,
+} from "./productivity.js";
