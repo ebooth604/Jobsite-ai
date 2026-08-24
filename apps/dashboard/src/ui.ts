@@ -285,6 +285,38 @@ const STYLES = `
   footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line);
     font-size: 13px; color: var(--muted); }
 
+  #ai-toggle { position: fixed; right: 20px; bottom: 20px; z-index: 40;
+    padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; font: inherit; font-size: 14px;
+    font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+  #ai-panel { position: fixed; right: 20px; bottom: 72px; z-index: 40;
+    width: min(380px, calc(100vw - 40px)); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0,0,0,.18); display: flex; flex-direction: column; }
+  .ai-head { padding: 10px 12px; font-size: 12px; color: var(--muted);
+    border-bottom: 1px solid var(--line); }
+  #ai-log { max-height: 300px; overflow-y: auto; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+  .ai-msg { padding: 8px 10px; border-radius: 8px; max-width: 92%; }
+  .ai-msg.you { align-self: flex-end; background: var(--bg);
+    border: 1px solid var(--line); }
+  .ai-msg.assistant { align-self: flex-start;
+    background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .ai-row { display: flex; gap: 8px; padding: 10px 12px;
+    border-top: 1px solid var(--line); }
+  .ai-row input { flex: 1; min-width: 0; padding: 8px 10px; font: inherit;
+    font-size: 14px; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; }
+  .ai-row button { padding: 8px 14px; border-radius: 6px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; font: inherit; font-size: 14px;
+    cursor: pointer; }
+  .ai-row button:disabled { opacity: .5; cursor: not-allowed; }
+  .ai-flash { animation: aiflash 1.6s ease-out; }
+  @keyframes aiflash {
+    0%, 40% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
   @media (max-width: 720px) {
     :root { --label-w: 1fr; --value-w: auto; }
     .bar-row { grid-template-columns: 1fr; gap: 6px; }
@@ -346,6 +378,21 @@ export function page(opts: PageOptions): string {
 
   <footer>${escapeHtml(opts.footer)}</footer>
 </div>
+
+<button type="button" id="ai-toggle" aria-expanded="false">Ask Sitewire</button>
+<div id="ai-panel" hidden>
+  <div class="ai-head">
+    Assistant · fills forms and explains numbers. It never sets a quantity,
+    an abstention, or a face-blur declaration — those stay yours.
+  </div>
+  <div id="ai-log"></div>
+  <div class="ai-row">
+    <input id="ai-input" type="text" autocomplete="off"
+      placeholder="e.g. set the area to L5 north corridor">
+    <button type="button" id="ai-send">Send</button>
+  </div>
+</div>
+<script type="module" src="/assistant.js"></script>
 </body>
 </html>`;
 }

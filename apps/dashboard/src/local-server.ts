@@ -7,7 +7,7 @@
  */
 
 import { createServer } from "node:http";
-import { renderPath } from "./app.js";
+import { handleAssist, renderPath } from "./app.js";
 
 const PORT = Number(process.env.PORT ?? 4173);
 const HOST = "127.0.0.1";
@@ -18,6 +18,18 @@ const server = createServer((req, res) => {
   if (path === "/healthz") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+
+  if (path === "/ai" && req.method === "POST") {
+    const chunks: Buffer[] = [];
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
+      void handleAssist(Buffer.concat(chunks).toString("utf8")).then((ai) => {
+        res.writeHead(ai.status, { "content-type": ai.contentType, "cache-control": "no-store" });
+        res.end(ai.body);
+      });
+    });
     return;
   }
 

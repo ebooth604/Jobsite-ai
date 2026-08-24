@@ -11,6 +11,7 @@
     "@sitewire/shared-types": "workspace:*"
   },
   "devDependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1116.0",
     "@types/node": "^26.2.0"
   }
 }

@@ -60,6 +60,7 @@ const scriptCache = new Map<string, string>();
 /** Only these names are servable — the path never reaches the filesystem raw. */
 const CLIENT_SCRIPTS: Record<string, string> = {
   "/capture.js": "capture-client.js",
+  "/assistant.js": "assistant-client.js",
   "/bid.js": "bid-client.js",
 };
 
@@ -100,4 +101,30 @@ export function renderPath(rawPath: string): RenderResult {
     return { status: 404, contentType: HTML, body: overview(model) };
   }
   return { status: 200, contentType: HTML, body: view(model) };
+}
+
+/**
+ * The assist endpoint. Separate from renderPath because it is asynchronous and
+ * takes a request body, and because a model call has a very different failure
+ * profile from rendering a page — a Bedrock outage must not take the site down.
+ */
+export async function handleAssist(rawBody: string): Promise<RenderResult> {
+  const json = "application/json; charset=utf-8";
+  try {
+    const parsed = JSON.parse(rawBody || "{}") as { message?: unknown; context?: unknown };
+    const { assist } = await import("./ai.js");
+    const result = await assist(
+      typeof parsed.message === "string" ? parsed.message : "",
+      typeof parsed.context === "string" ? parsed.context : "",
+      SCOPE_ITEMS,
+    );
+    return { status: 200, contentType: json, body: JSON.stringify(result) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      status: 502,
+      contentType: json,
+      body: JSON.stringify({ reply: `Assistant unavailable — ${message}`, actions: [] }),
+    };
+  }
 }

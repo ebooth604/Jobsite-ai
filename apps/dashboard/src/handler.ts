@@ -8,10 +8,13 @@
  * architecture.
  */
 
-import { renderPath } from "./app.js";
+import { handleAssist, renderPath } from "./app.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
+  body?: string;
+  isBase64Encoded?: boolean;
+  requestContext?: { http?: { method?: string } };
 }
 
 interface FunctionUrlResult {
@@ -35,7 +38,9 @@ const CSP = [
   "script-src 'self'",
   "style-src 'unsafe-inline'",
   "img-src 'self' blob: data:",
-  "connect-src 'none'",
+  // 'self' so the page can reach /ai, and nothing else. A photo still has
+  // nowhere to go: no other origin is reachable from this document.
+  "connect-src 'self'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
@@ -49,6 +54,23 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
       statusCode: 200,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ status: "ok" }),
+    };
+  }
+
+  if (path === "/ai" && event.requestContext?.http?.method === "POST") {
+    const raw = event.isBase64Encoded
+      ? Buffer.from(event.body ?? "", "base64").toString("utf8")
+      : (event.body ?? "");
+    const ai = await handleAssist(raw);
+    return {
+      statusCode: ai.status,
+      headers: {
+        "content-type": ai.contentType,
+        "cache-control": "no-store",
+        "content-security-policy": CSP,
+        "x-content-type-options": "nosniff",
+      },
+      body: ai.body,
     };
   }
 
