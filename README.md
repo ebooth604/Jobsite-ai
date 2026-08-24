@@ -33,6 +33,7 @@ packages/          shared libraries
   shared-types/      cross-service types and schemas
   ui-components/     shared dashboard components
 infra/             IaC, CI/CD, environment config
+fixtures/          removable simulated data — delete the directory to remove it
 ```
 
 The layout follows technical plan §10. `docs/` stays alongside the code as the
@@ -78,6 +79,28 @@ end: `packages/shared-types` (holding `CaptureOrigin`, the type the accuracy har
 uses to keep simulated captures out of measurement) and `services/quantity-ml`
 (holding `should_abstain`, which takes its threshold as an argument rather than
 hard-coding it). Everything else is still a README.
+
+## Fixtures
+
+`fixtures/` generates synthetic records and placeholder media and loads them into
+S3, so the AWS side has something to move before any real capture exists.
+
+```
+node fixtures/generate.mjs
+./fixtures/load-to-s3.sh --bucket BUCKET --dry-run
+./fixtures/teardown-s3.sh --bucket BUCKET
+```
+
+Every capture is stamped `origin: "simulated"` — it **may train a model and may
+never measure one** (§5.4d, §11) — and `fixtures/verify.mjs` enforces that on the
+upload path, alongside the §4 rule that nothing aggregates by individual worker.
+The loader also refuses a non-`ca-*` region and any prefix outside `_fixtures/`,
+which is what keeps teardown a single command.
+
+It is deliberately not a workspace member and nothing imports it: `rm -rf
+fixtures/` removes it with `pnpm check` still green. `infra/terraform/fixtures.tf`
+will provision a bucket that expires its contents after 30 days, off by default.
+See `fixtures/README.md`.
 
 ## Status
 

@@ -48,3 +48,6 @@ npm-debug.log*
 
 # Python tooling
 .ruff_cache/
+
+# Generated fixture data — removable, never committed (see fixtures/README.md)
+fixtures/out/
