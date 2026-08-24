@@ -43,6 +43,7 @@ interface Shot {
 
 interface QueuedCapture {
   captureId: string;
+  seq: number;
   fileName: string;
   scopeItemId: string;
   area: string;
@@ -52,8 +53,64 @@ interface QueuedCapture {
   abstained: boolean;
   redactionCount: number;
   faceBlurStatus: "blurred" | "declared_no_people";
-  dataUrl: string;
+  savedAt: string;
+  /**
+   * The redacted render, stored as a Blob rather than a data URL: base64 inflates
+   * bytes by a third and localStorage would blow its quota after a few photos.
+   * Only ever the redacted image — the original bitmap is never written here.
+   */
+  blob: Blob;
 }
+
+const DB_NAME = "sitewire-demo";
+const DB_STORE = "captures";
+
+/**
+ * IndexedDB, opened lazily. If it is unavailable — private browsing, a locked-down
+ * profile — the console still works, it just stops surviving a refresh, and the UI
+ * says so rather than pretending the capture was saved.
+ */
+function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: "captureId" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error("indexedDB open failed"));
+  });
+}
+
+function tx<T>(
+  mode: IDBTransactionMode,
+  run: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
+  return openDb().then(
+    (db) =>
+      new Promise<T>((resolve, reject) => {
+        const t = db.transaction(DB_STORE, mode);
+        const req = run(t.objectStore(DB_STORE));
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error ?? new Error("indexedDB request failed"));
+        t.oncomplete = () => db.close();
+      }),
+  );
+}
+
+const dbGetAll = (): Promise<QueuedCapture[]> =>
+  tx<QueuedCapture[]>("readonly", (s) => s.getAll() as IDBRequest<QueuedCapture[]>);
+const dbPut = (entry: QueuedCapture): Promise<IDBValidKey> =>
+  tx<IDBValidKey>("readwrite", (s) => s.put(entry));
+const dbDelete = (id: string): Promise<undefined> =>
+  tx<undefined>("readwrite", (s) => s.delete(id) as IDBRequest<undefined>);
+const dbClear = (): Promise<undefined> =>
+  tx<undefined>("readwrite", (s) => s.clear() as IDBRequest<undefined>);
+
+/** Set when IndexedDB is unusable, so the UI can tell the truth about persistence. */
+let storageError: string | null = null;
 
 const $ = <T extends HTMLElement>(sel: string): T => {
   const el = document.querySelector<T>(sel);
@@ -322,7 +379,17 @@ function updateGate(): void {
   }
 }
 
-function queueActive(): void {
+function toBlob(source: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    source.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("canvas encode failed"))),
+      "image/jpeg",
+      0.85,
+    );
+  });
+}
+
+async function queueActive(): Promise<void> {
   const shot = activeShot();
   if (!shot) return;
 
@@ -331,7 +398,13 @@ function queueActive(): void {
   const qtyRaw = $<HTMLInputElement>("#quantity").value;
 
   const entry: QueuedCapture = {
-    captureId: `cap-${queue.length + 1}`,
+    // Unique across sessions — a reload-safe key, unlike a length-based counter,
+    // which would collide with a capture already in the store.
+    captureId:
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `cap-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    seq: queue.reduce((max, q) => Math.max(max, q.seq), 0) + 1,
     fileName: shot.name,
     scopeItemId: $<HTMLSelectElement>("#scope").value,
     area: $<HTMLInputElement>("#area").value || "(unspecified)",
@@ -341,19 +414,85 @@ function queueActive(): void {
     abstained,
     redactionCount: shot.redactions.length,
     faceBlurStatus: shot.redactions.length > 0 ? "blurred" : "declared_no_people",
+    savedAt: new Date().toISOString(),
     // Only the redacted render is ever produced. The original bitmap stays in
     // memory for editing and is never exported or written anywhere.
-    dataUrl: full.toDataURL("image/jpeg", 0.85),
+    blob: await toBlob(full),
   };
 
   queue.push(entry);
+
+  try {
+    await dbPut(entry);
+    storageError = null;
+  } catch (err) {
+    // Keep the capture in memory and say plainly that it did not persist, rather
+    // than showing a saved-looking card that will vanish on refresh.
+    storageError = err instanceof Error ? err.message : String(err);
+  }
+
   renderQueue();
 }
+
+async function loadSaved(): Promise<void> {
+  try {
+    const saved = await dbGetAll();
+    saved.sort((a, b) => a.seq - b.seq);
+    queue.length = 0;
+    queue.push(...saved);
+    storageError = null;
+  } catch (err) {
+    storageError = err instanceof Error ? err.message : String(err);
+  }
+  renderQueue();
+}
+
+async function removeCapture(id: string): Promise<void> {
+  const idx = queue.findIndex((q) => q.captureId === id);
+  if (idx >= 0) queue.splice(idx, 1);
+  try {
+    await dbDelete(id);
+  } catch {
+    // Already gone from the view; a failed delete is reported on next load.
+  }
+  renderQueue();
+}
+
+async function clearAll(): Promise<void> {
+  queue.length = 0;
+  try {
+    await dbClear();
+  } catch {
+    // Same: the in-memory list is authoritative for what is on screen.
+  }
+  renderQueue();
+}
+
+/** Object URLs handed out for the current render, revoked before the next one. */
+let liveUrls: string[] = [];
 
 function renderQueue(): void {
   const list = $<HTMLDivElement>("#queue-list");
   const count = $<HTMLSpanElement>("#queue-count");
   count.textContent = String(queue.length);
+
+  for (const url of liveUrls) URL.revokeObjectURL(url);
+  liveUrls = [];
+
+  const note = $<HTMLParagraphElement>("#storage-note");
+  if (storageError) {
+    note.className = "gate todo";
+    note.textContent = `Not saved to this device — ${storageError}. Captures will be lost on refresh.`;
+  } else if (queue.length > 0) {
+    note.className = "gate ok";
+    note.textContent =
+      "Saved on this device only, and only the redacted image. Nothing was uploaded. Use Clear all before handing this laptop on.";
+  } else {
+    note.className = "muted";
+    note.textContent = "";
+  }
+
+  $<HTMLButtonElement>("#clear-all").hidden = queue.length === 0;
 
   if (queue.length === 0) {
     list.innerHTML = '<div class="empty">No captures prepared yet.</div>';
@@ -366,9 +505,12 @@ function renderQueue(): void {
     const card = document.createElement("div");
     card.className = "queued";
 
+    const url = URL.createObjectURL(entry.blob);
+    liveUrls.push(url);
+
     const img = document.createElement("img");
-    img.src = entry.dataUrl;
-    img.alt = `Redacted capture ${entry.captureId}`;
+    img.src = url;
+    img.alt = `Redacted capture ${entry.seq}`;
 
     const meta = document.createElement("div");
     const quantity = entry.abstained
@@ -378,7 +520,7 @@ function renderQueue(): void {
         : `${entry.estimatedQuantity} ${scope ? scope.unitOfMeasure : ""}`;
 
     meta.innerHTML = [
-      `<strong>${entry.captureId}</strong> <span class="muted">${entry.fileName}</span>`,
+      `<strong>cap-${entry.seq}</strong> <span class="muted">${entry.fileName}</span>`,
       `<div class="muted">${scope ? `${scope.trade} — ${scope.description}` : entry.scopeItemId}</div>`,
       `<div class="muted">${entry.area} · ${entry.capturedAt}</div>`,
       `<div>Quantity: ${quantity}</div>`,
@@ -386,13 +528,24 @@ function renderQueue(): void {
       `<span class="chip">face_blur_status: ${entry.faceBlurStatus}</span></div>`,
     ].join("");
 
+    const actions = document.createElement("div");
+
     const dl = document.createElement("a");
-    dl.href = entry.dataUrl;
-    dl.download = `${entry.captureId}-redacted.jpg`;
+    dl.href = url;
+    dl.download = `cap-${entry.seq}-redacted.jpg`;
     dl.textContent = "Download redacted";
     dl.className = "linkish";
 
-    card.append(img, meta, dl);
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "linkish danger";
+    del.textContent = "Delete";
+    del.addEventListener("click", () => {
+      void removeCapture(entry.captureId);
+    });
+
+    actions.append(dl, del);
+    card.append(img, meta, actions);
     list.append(card);
   }
 }
@@ -470,12 +623,20 @@ function init(): void {
     $<HTMLInputElement>("#quantity").disabled = (ev.target as HTMLInputElement).checked;
   });
 
-  $("#queue").addEventListener("click", queueActive);
+  $("#queue").addEventListener("click", () => {
+    void queueActive();
+  });
+
+  $("#clear-all").addEventListener("click", () => {
+    void clearAll();
+  });
 
   window.addEventListener("resize", draw);
 
   renderQueue();
   draw();
+  // Restore anything saved on this device from a previous session.
+  void loadSaved();
 }
 
 init();

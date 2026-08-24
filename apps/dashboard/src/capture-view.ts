@@ -73,7 +73,14 @@ const CAPTURE_STYLES = `
   .chip { display: inline-block; margin: 4px 6px 0 0; padding: 2px 8px;
     border-radius: 999px; border: 1px solid var(--line); font-size: 11px;
     color: var(--muted); }
-  .linkish { color: var(--accent); font-size: 13px; white-space: nowrap; }
+  .linkish { color: var(--accent); font-size: 13px; white-space: nowrap;
+    display: block; background: none; border: none; padding: 0; cursor: pointer;
+    font-family: inherit; text-align: left; }
+  .linkish.danger { color: var(--critical); margin-top: 6px; }
+  .btnish { display: inline-block; padding: 8px 14px; border: 1px solid var(--line);
+    border-radius: 6px; cursor: pointer; color: var(--ink); background: var(--bg);
+    font: inherit; font-size: 14px; }
+  .btnish.danger { color: var(--critical); border-color: var(--critical); }
 `;
 
 export function captureView(
@@ -190,6 +197,10 @@ export function captureView(
 </div>
 
 <h2>Prepared captures (<span id="queue-count">0</span>)</h2>
+<p id="storage-note" class="muted"></p>
+<div style="margin-bottom:10px">
+  <button type="button" id="clear-all" class="btnish danger" hidden>Clear all saved captures</button>
+</div>
 <div id="queue-list"></div>
 
 <script type="application/json" id="scope-items">${scopeJson}</script>
