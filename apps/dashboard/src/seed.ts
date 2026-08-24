@@ -59,9 +59,15 @@ export const SCOPE_ITEMS: ScopeItem[] = [
   },
 ];
 
-const simulated = (id: string, area: string, capturedAt: string, capturedBy: string): Capture => ({
+const simulated = (
+  id: string,
+  area: string,
+  capturedAt: string,
+  capturedBy: string,
+  projectId: string = DEMO_PROJECT.id,
+): Capture => ({
   id,
-  projectId: DEMO_PROJECT.id,
+  projectId,
   area,
   capturedAt,
   capturedBy,
@@ -199,3 +205,109 @@ export const CONDITIONS: Condition[] = [
 export const CONDITION_CAPTURE_SCOPE = new Map<string, string>(
   ESTIMATES.map((e) => [e.captureId, e.scopeItemId]),
 );
+
+/**
+ * Two further projects, so the customer landing page has a real portfolio to
+ * select from rather than one card.
+ *
+ * Kilmer is mid-flight with a framing overrun. Fraser Exchange is deliberately
+ * pre-capture — a project that exists in the bid but has no photos yet is the
+ * ordinary state of a new deployment, and a landing page that cannot render that
+ * honestly would be hiding the most common case.
+ */
+
+export const KILMER_PROJECT: Project = {
+  id: "proj-demo-2",
+  name: "Kilmer Ridge — Phase 2",
+  address: "2200 Kilmer Road, Surrey",
+  province: "BC",
+  dataRegion: "ca-central-1",
+};
+
+export const FRASER_PROJECT: Project = {
+  id: "proj-demo-3",
+  name: "Fraser Exchange — Podium",
+  address: "88 Exchange Street, New Westminster",
+  province: "BC",
+  dataRegion: "ca-central-1",
+};
+
+export const ALL_PROJECTS: Project[] = [DEMO_PROJECT, KILMER_PROJECT, FRASER_PROJECT];
+
+export const KILMER_SCOPE_ITEMS: ScopeItem[] = [
+  {
+    id: "k-scope-framing-l2",
+    projectId: KILMER_PROJECT.id,
+    trade: "Framing",
+    description: "Level 2 interior partitions",
+    unitOfMeasure: "lin ft",
+    bidQuantity: 4200,
+    budgetedUnitsPerHour: 20.0,
+  },
+  {
+    id: "k-scope-drywall-l2",
+    projectId: KILMER_PROJECT.id,
+    trade: "Drywall",
+    description: "Level 2 board hang — east block",
+    unitOfMeasure: "sheets",
+    bidQuantity: 1900,
+    budgetedUnitsPerHour: 5.5,
+  },
+];
+
+export const KILMER_CAPTURES: Capture[] = [
+  simulated("k-cap-1", "L2 east corridor", "2026-08-19", "user-foreman-c", KILMER_PROJECT.id),
+  simulated("k-cap-2", "L2 east corridor", "2026-08-20", "user-foreman-c", KILMER_PROJECT.id),
+];
+
+export const KILMER_ESTIMATES: QuantityEstimate[] = [
+  {
+    id: "k-est-1",
+    captureId: "k-cap-1",
+    scopeItemId: "k-scope-framing-l2",
+    estimatedQuantity: 132,
+    confidence: 0.87,
+    abstained: false,
+    modelVersion: "framing-v0.2-demo",
+  },
+  {
+    id: "k-est-2",
+    captureId: "k-cap-2",
+    scopeItemId: "k-scope-drywall-l2",
+    estimatedQuantity: 41,
+    confidence: 0.9,
+    abstained: false,
+    modelVersion: "drywall-v0.3-demo",
+  },
+];
+
+export const KILMER_HOURS: LabourHoursRecord[] = [
+  {
+    id: "k-hrs-1",
+    projectId: KILMER_PROJECT.id,
+    scopeItemId: "k-scope-framing-l2",
+    date: "2026-08-19",
+    hours: 10,
+    sourceSystem: "Rhumbix",
+    normalizationFlags: [],
+  },
+  {
+    id: "k-hrs-2",
+    projectId: KILMER_PROJECT.id,
+    scopeItemId: "k-scope-drywall-l2",
+    date: "2026-08-20",
+    hours: 8,
+    sourceSystem: "Rhumbix",
+    normalizationFlags: [],
+  },
+];
+
+export const KILMER_CONDITIONS: Condition[] = [
+  {
+    id: "k-cond-1",
+    captureId: "k-cap-1",
+    conditionType: "out_of_sequence",
+    description: "Overhead mechanical incomplete above partition line",
+    confidence: 0.71,
+  },
+];

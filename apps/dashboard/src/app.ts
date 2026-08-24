@@ -10,16 +10,33 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bidView } from "./bid-view.js";
 import { captureView } from "./capture-view.js";
+import { landingView, reportView } from "./landing-view.js";
 import { detectDrift, reconcile } from "./reconcile.js";
+import { type ProjectData, readiness, reportKind } from "./reports.js";
 import {
+  ALL_PROJECTS,
   CAPTURES,
   CONDITION_CAPTURE_SCOPE,
   CONDITIONS,
   DEMO_PROJECT,
   ESTIMATES,
   HOURS,
+  KILMER_CAPTURES,
+  KILMER_CONDITIONS,
+  KILMER_ESTIMATES,
+  KILMER_HOURS,
+  KILMER_SCOPE_ITEMS,
   SCOPE_ITEMS,
 } from "./seed.js";
+import type { Project } from "./types.js";
+
+/** Every project's rows in one place, filtered per project on demand. */
+const ALL_SCOPE_ITEMS = [...SCOPE_ITEMS, ...KILMER_SCOPE_ITEMS];
+const ALL_CAPTURES = [...CAPTURES, ...KILMER_CAPTURES];
+const ALL_ESTIMATES = [...ESTIMATES, ...KILMER_ESTIMATES];
+const ALL_HOURS = [...HOURS, ...KILMER_HOURS];
+const ALL_CONDITIONS = [...CONDITIONS, ...KILMER_CONDITIONS];
+
 import type { ViewModel } from "./views.js";
 import { alerts, dataQuality, overview, productivity } from "./views.js";
 
@@ -127,4 +144,72 @@ export async function handleAssist(rawBody: string): Promise<RenderResult> {
       body: JSON.stringify({ reply: `Assistant unavailable — ${message}`, actions: [] }),
     };
   }
+}
+
+/** Per-project data, reconciled independently so one project's gaps stay its own. */
+export function projectData(project: Project): ProjectData {
+  const scopeIds = new Set(
+    ALL_SCOPE_ITEMS.filter((s) => s.projectId === project.id).map((s) => s.id),
+  );
+  const captures = ALL_CAPTURES.filter((c) => c.projectId === project.id);
+  const captureIds = new Set(captures.map((c) => c.id));
+  const scopeItems = ALL_SCOPE_ITEMS.filter((s) => s.projectId === project.id);
+  const estimates = ALL_ESTIMATES.filter((e) => captureIds.has(e.captureId));
+  const hours = ALL_HOURS.filter((h) => h.projectId === project.id);
+  const conditions = ALL_CONDITIONS.filter((c) => captureIds.has(c.captureId));
+
+  return {
+    project,
+    scopeItems,
+    captures,
+    estimates,
+    hours,
+    conditions,
+    factors: reconcile({ scopeItems, captures, estimates, hours }).filter((f) =>
+      scopeIds.has(f.scopeItemId),
+    ),
+  };
+}
+
+export function allProjectData(): ProjectData[] {
+  return ALL_PROJECTS.map(projectData);
+}
+
+/**
+ * The landing page and reports are selected by query string, which renderPath
+ * strips. They are routed here instead, from the full URL.
+ */
+export function renderWithQuery(rawUrl: string): RenderResult | null {
+  const [pathPart = "/", queryPart = ""] = rawUrl.split("?");
+  const path = pathPart.length > 1 ? pathPart.replace(/\/+$/, "") : pathPart;
+  if (path !== "/projects" && path !== "/projects/report") return null;
+
+  const params = new URLSearchParams(queryPart);
+  const projects = allProjectData();
+
+  if (path === "/projects") {
+    return {
+      status: 200,
+      contentType: HTML,
+      body: landingView(projects, params.get("project") ?? ""),
+    };
+  }
+
+  const data = projects.find((d) => d.project.id === params.get("project"));
+  const kind = reportKind(params.get("kind") ?? "");
+  if (!data || !kind) {
+    return { status: 404, contentType: HTML, body: landingView(projects, "") };
+  }
+
+  // A report whose figures do not resolve is never rendered, even if its URL is
+  // typed directly — the readiness gate is not just a disabled button.
+  if (!readiness(data, kind).ready) {
+    return {
+      status: 409,
+      contentType: HTML,
+      body: landingView(projects, data.project.id),
+    };
+  }
+
+  return { status: 200, contentType: HTML, body: reportView(data, kind) };
 }

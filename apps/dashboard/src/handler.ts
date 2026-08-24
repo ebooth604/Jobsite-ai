@@ -8,10 +8,11 @@
  * architecture.
  */
 
-import { handleAssist, renderPath } from "./app.js";
+import { handleAssist, renderPath, renderWithQuery } from "./app.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
+  rawQueryString?: string;
   body?: string;
   isBase64Encoded?: boolean;
   requestContext?: { http?: { method?: string } };
@@ -74,7 +75,9 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
     };
   }
 
-  const { status, contentType, body } = renderPath(path);
+  const url = event.rawQueryString ? `${path}?${event.rawQueryString}` : path;
+  const withQuery = renderWithQuery(url);
+  const { status, contentType, body } = withQuery ?? renderPath(path);
 
   return {
     statusCode: status,

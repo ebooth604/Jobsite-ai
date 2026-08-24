@@ -7,7 +7,7 @@
  */
 
 import { createServer } from "node:http";
-import { handleAssist, renderPath } from "./app.js";
+import { handleAssist, renderPath, renderWithQuery } from "./app.js";
 
 const PORT = Number(process.env.PORT ?? 4173);
 const HOST = "127.0.0.1";
@@ -33,7 +33,8 @@ const server = createServer((req, res) => {
     return;
   }
 
-  const { status, contentType, body } = renderPath(path);
+  const withQuery = renderWithQuery(req.url ?? "/");
+  const { status, contentType, body } = withQuery ?? renderPath(path);
   res.writeHead(status, {
     "content-type": contentType,
     "cache-control": "no-store",

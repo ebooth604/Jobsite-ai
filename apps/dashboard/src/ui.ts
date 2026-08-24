@@ -155,6 +155,7 @@ export const NAV: NavItem[] = [
   { href: "/alerts", label: "Alerts" },
   { href: "/capture", label: "Capture" },
   { href: "/bid", label: "Bid alignment" },
+  { href: "/projects", label: "Reports" },
   { href: "/data-quality", label: "Data quality" },
 ];
 
@@ -289,6 +290,9 @@ const STYLES = `
     padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent);
     background: var(--accent); color: #fff; font: inherit; font-size: 14px;
     font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+  /* display:flex below would otherwise beat the UA rule for [hidden], leaving the
+     panel permanently open over the page. */
+  #ai-panel[hidden] { display: none; }
   #ai-panel { position: fixed; right: 20px; bottom: 72px; z-index: 40;
     width: min(380px, calc(100vw - 40px)); background: var(--panel);
     border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
