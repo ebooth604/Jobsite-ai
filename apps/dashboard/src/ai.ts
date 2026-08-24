@@ -253,3 +253,121 @@ export async function assist(
 
   return { reply: reply.trim(), actions };
 }
+
+/**
+ * Vision-assisted capture description.
+ *
+ * This is the one place an image leaves the browser, and it is deliberately
+ * narrow:
+ *
+ *   - Only the REDACTED render is ever sent. The client gates the button on the
+ *     same redaction check that gates queueing, so an unredacted photo has no
+ *     path here at all.
+ *   - It goes to the Canadian inference profile, so a jobsite photo does not
+ *     leave the residency boundary.
+ *   - It may propose an AREA and a SCOPE ITEM, and describe what is visible.
+ *     It may not propose a quantity. Quantity belongs to a calibrated per-trade
+ *     model with an abstention threshold (technical plan §5), not to a general
+ *     model that always answers. A number invented here would flow into a
+ *     productivity factor and then into a change-order package, which is exactly
+ *     the fabrication this product exists to avoid.
+ */
+export interface VisionResult {
+  description: string;
+  fields: Record<string, string>;
+}
+
+export async function describeCapture(
+  imageBase64: string,
+  scopeItems: ScopeItem[],
+): Promise<VisionResult> {
+  const bytes = Buffer.from(imageBase64, "base64");
+  if (bytes.length === 0) throw new Error("empty image");
+  if (bytes.length > 4_000_000) throw new Error("image too large — downscale before sending");
+
+  const scopeList = scopeItems
+    .map((s) => `${s.id} = ${s.trade}, ${s.description} (${s.unitOfMeasure})`)
+    .join("\n");
+
+  const response = await client.send(
+    new ConverseCommand({
+      modelId: MODEL_ID,
+      system: [
+        {
+          text: [
+            "You are looking at a redacted construction site photo for Sitewire.",
+            "",
+            "Describe in two sentences what trade work is visible and any obstruction,",
+            "stacked trade, or access problem. Then, if you can tell, use the tool to",
+            "propose which scope item it belongs to and a short area label.",
+            "",
+            "Absolute rules:",
+            "- NEVER state or estimate a quantity, count, area measurement or percentage",
+            "  complete. You are not the quantity model, and a number from you would be",
+            "  a guess presented as a measurement.",
+            "- If the photo is unclear, say so plainly and propose nothing.",
+            "- Mosaicked blocks are deliberate face redaction. Do not comment on them.",
+            "",
+            "Scope items on this project:",
+            scopeList,
+          ].join("\n"),
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: [
+            { image: { format: "jpeg", source: { bytes } } },
+            { text: "Describe this capture and propose the scope item and area if clear." },
+          ],
+        },
+      ],
+      inferenceConfig: { maxTokens: 400, temperature: 0.2 },
+      toolConfig: { tools: [tools(scopeItems)[0] as Tool] },
+    }),
+  );
+
+  const blocks = response.output?.message?.content ?? [];
+  let description = "";
+  let fields: Record<string, string> = {};
+
+  for (const block of blocks) {
+    if (block.text) description += cleanText(block.text);
+    if (block.toolUse?.name === "fill_capture_form") {
+      const action = validate(
+        "fill_capture_form",
+        (block.toolUse.input ?? {}) as Record<string, unknown>,
+        scopeItems,
+      );
+      if (action?.fields) {
+        // Belt and braces: the tool has no quantity field, and these are stripped
+        // again here in case the schema is ever widened without revisiting this.
+        const { scopeItemId, area } = action.fields;
+        fields = {
+          ...(scopeItemId ? { scopeItemId } : {}),
+          ...(area ? { area } : {}),
+        };
+      }
+    }
+  }
+
+  const text = description.trim();
+
+  // Placeholder areas are the model filling a slot rather than reading a photo.
+  // "Unspecified area" in a change-order package is worse than a blank field,
+  // because a blank field is obviously unfinished and a placeholder looks answered.
+  const PLACEHOLDER = /^(unspecified|unknown|n\/?a|none|not specified|area)\b/i;
+  if (fields.area && PLACEHOLDER.test(fields.area)) delete fields.area;
+
+  // The model was told to propose nothing when the photo is unclear. If it came
+  // back with no prose at all it did not describe anything, so its tool call is
+  // not grounded in a reading of the image — drop the proposals with it.
+  if (!text) {
+    return {
+      description: "No clear read on this photo — nothing proposed.",
+      fields: {},
+    };
+  }
+
+  return { description: text, fields };
+}

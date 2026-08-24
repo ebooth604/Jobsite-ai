@@ -627,6 +627,10 @@ function init(): void {
     void queueActive();
   });
 
+  $("#describe").addEventListener("click", () => {
+    void describeActive();
+  });
+
   $("#clear-all").addEventListener("click", () => {
     void clearAll();
   });
@@ -640,6 +644,91 @@ function init(): void {
 }
 
 init();
+
+/**
+ * Vision assist. This is the ONLY path where an image leaves the tab, and it is
+ * gated twice: the button stays disabled until the redaction gate passes, and the
+ * bytes sent are the redacted render, never the source bitmap.
+ *
+ * The image is downscaled before sending. A phone photo is several megabytes,
+ * base64 adds a third again, and Lambda's synchronous payload limit is 6 MB —
+ * but the real reason is that the model does not need full resolution to say
+ * "drywall, corridor blocked", and sending less of a jobsite photo is simply
+ * better than sending more.
+ */
+const VISION_MAX_EDGE = 1024;
+
+async function redactedJpegForVision(shot: Shot): Promise<string> {
+  const full = renderFull(shot);
+  const scale = Math.min(1, VISION_MAX_EDGE / Math.max(full.width, full.height));
+
+  const out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(full.width * scale));
+  out.height = Math.max(1, Math.round(full.height * scale));
+  const c = context2d(out);
+  c.imageSmoothingEnabled = true;
+  c.drawImage(full, 0, 0, out.width, out.height);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    out.toBlob((b) => (b ? resolve(b) : reject(new Error("encode failed"))), "image/jpeg", 0.75);
+  });
+
+  const buffer = await blob.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i] as number);
+  return btoa(binary);
+}
+
+async function describeActive(): Promise<void> {
+  const shot = activeShot();
+  const status = $<HTMLParagraphElement>("#vision-status");
+  const button = $<HTMLButtonElement>("#describe");
+  if (!shot) return;
+
+  // The same condition that gates queueing. An unredacted photo never goes out.
+  if (shot.redactions.length === 0 && !shot.noPeople) {
+    status.className = "gate todo";
+    status.textContent =
+      "Redact faces or declare no people in frame first. Nothing is sent before that.";
+    return;
+  }
+
+  button.disabled = true;
+  status.className = "muted";
+  status.textContent = "Sending the redacted image to Bedrock in ca-central-1…";
+
+  try {
+    const image = await redactedJpegForVision(shot);
+    const res = await fetch("/ai/vision", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ image }),
+    });
+    const data = (await res.json()) as { description: string; fields?: Record<string, string> };
+
+    status.className = "gate ok";
+    status.textContent = data.description;
+
+    if (data.fields?.scopeItemId) {
+      const select = $<HTMLSelectElement>("#scope");
+      select.value = data.fields.scopeItemId;
+      select.classList.add("ai-flash");
+      window.setTimeout(() => select.classList.remove("ai-flash"), 1600);
+    }
+    if (data.fields?.area) {
+      const area = $<HTMLInputElement>("#area");
+      area.value = data.fields.area;
+      area.classList.add("ai-flash");
+      window.setTimeout(() => area.classList.remove("ai-flash"), 1600);
+    }
+  } catch (err) {
+    status.className = "gate todo";
+    status.textContent = `Could not read that photo — ${err instanceof Error ? err.message : err}`;
+  } finally {
+    button.disabled = false;
+  }
+}
 
 // Loaded as <script type="module">. This marks the file a module so its
 // top-level names stay local rather than colliding in the global scope.

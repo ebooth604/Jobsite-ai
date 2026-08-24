@@ -7,7 +7,7 @@
  */
 
 import { createServer } from "node:http";
-import { handleAssist, renderPath, renderWithQuery } from "./app.js";
+import { handleAssist, handleVision, renderPath, renderWithQuery } from "./app.js";
 
 const PORT = Number(process.env.PORT ?? 4173);
 const HOST = "127.0.0.1";
@@ -21,11 +21,12 @@ const server = createServer((req, res) => {
     return;
   }
 
-  if (path === "/ai" && req.method === "POST") {
+  if ((path === "/ai" || path === "/ai/vision") && req.method === "POST") {
     const chunks: Buffer[] = [];
     req.on("data", (c: Buffer) => chunks.push(c));
     req.on("end", () => {
-      void handleAssist(Buffer.concat(chunks).toString("utf8")).then((ai) => {
+      const run = path === "/ai/vision" ? handleVision : handleAssist;
+      void run(Buffer.concat(chunks).toString("utf8")).then((ai) => {
         res.writeHead(ai.status, { "content-type": ai.contentType, "cache-control": "no-store" });
         res.end(ai.body);
       });

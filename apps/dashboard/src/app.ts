@@ -213,3 +213,27 @@ export function renderWithQuery(rawUrl: string): RenderResult | null {
 
   return { status: 200, contentType: HTML, body: reportView(data, kind) };
 }
+
+/**
+ * Vision endpoint. The client only calls this once a capture's redaction gate has
+ * passed, so the bytes arriving here are from the redacted render.
+ */
+export async function handleVision(rawBody: string): Promise<RenderResult> {
+  const json = "application/json; charset=utf-8";
+  try {
+    const parsed = JSON.parse(rawBody || "{}") as { image?: unknown };
+    const image = typeof parsed.image === "string" ? parsed.image : "";
+    if (!image) throw new Error("no image supplied");
+
+    const { describeCapture } = await import("./ai.js");
+    const result = await describeCapture(image, SCOPE_ITEMS);
+    return { status: 200, contentType: json, body: JSON.stringify(result) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      status: 502,
+      contentType: json,
+      body: JSON.stringify({ description: `Could not read that photo — ${message}`, fields: {} }),
+    };
+  }
+}

@@ -8,7 +8,7 @@
  * architecture.
  */
 
-import { handleAssist, renderPath, renderWithQuery } from "./app.js";
+import { handleAssist, handleVision, renderPath, renderWithQuery } from "./app.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
@@ -58,11 +58,11 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
     };
   }
 
-  if (path === "/ai" && event.requestContext?.http?.method === "POST") {
+  if ((path === "/ai" || path === "/ai/vision") && event.requestContext?.http?.method === "POST") {
     const raw = event.isBase64Encoded
       ? Buffer.from(event.body ?? "", "base64").toString("utf8")
       : (event.body ?? "");
-    const ai = await handleAssist(raw);
+    const ai = path === "/ai/vision" ? await handleVision(raw) : await handleAssist(raw);
     return {
       statusCode: ai.status,
       headers: {

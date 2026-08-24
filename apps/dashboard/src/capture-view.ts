@@ -103,12 +103,18 @@ export function captureView(
 <style>${CAPTURE_STYLES}</style>
 
 <div class="note" style="margin-bottom:16px">
-  <strong>Nothing here is uploaded.</strong> Photos are read, redacted and previewed
-  entirely in this browser tab — no byte is sent anywhere. That mirrors the real
-  capture path: the mobile app redacts faces <em>on-device before sending</em>, and
-  the ingestion service re-checks server-side regardless. Two independent passes,
-  because a client-side bug is not an acceptable failure mode for a promise made in
-  a contract.
+  <strong>Photos stay in this tab unless you press "Describe with AI".</strong>
+  Reading, redacting and previewing all happen locally — nothing is uploaded by
+  simply adding a photo. <em>Describe with AI</em> is the one exception: it sends
+  the <strong>redacted</strong> image to Amazon Bedrock in <code>ca-central-1</code>,
+  and the button stays disabled until faces are redacted or you declare there are
+  none, so an unredacted photo has no path off this machine. It may propose an area
+  and a scope item; it may never propose a quantity.
+  <br><br>
+  This mirrors the real capture path: the mobile app redacts faces
+  <em>on-device before sending</em>, and the ingestion service re-checks
+  server-side regardless. Two independent passes, because a client-side bug is not
+  an acceptable failure mode for a promise made in a contract.
 </div>
 
 <div class="capture-grid">
@@ -130,7 +136,9 @@ export function captureView(
         <button type="button" id="rotate">Rotate 90°</button>
         <button type="button" id="undo">Undo redaction</button>
         <button type="button" id="clear">Clear redactions</button>
+        <button type="button" id="describe">Describe with AI</button>
       </div>
+      <p id="vision-status" class="muted" style="margin:0 0 10px;font-size:13px"></p>
       <canvas id="editor"></canvas>
       <p class="muted" style="margin:10px 0 0;font-size:13px">
         Drag across a face to redact it. Regions are mosaicked, not softly blurred —
