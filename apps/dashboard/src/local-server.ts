@@ -21,12 +21,12 @@ const server = createServer((req, res) => {
     return;
   }
 
-  const { status, html } = renderPath(path);
+  const { status, contentType, body } = renderPath(path);
   res.writeHead(status, {
-    "content-type": "text/html; charset=utf-8",
+    "content-type": contentType,
     "cache-control": "no-store",
   });
-  res.end(html);
+  res.end(body);
 });
 
 server.listen(PORT, HOST, () => {

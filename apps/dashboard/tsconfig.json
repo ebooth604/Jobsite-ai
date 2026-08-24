@@ -6,6 +6,6 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../../packages/shared-types" }]
+  "exclude": ["src/**/*.test.ts", "src/client/**"],
+  "references": [{ "path": "../../packages/shared-types" }, { "path": "./tsconfig.client.json" }]
 }

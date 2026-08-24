@@ -20,6 +20,27 @@ interface FunctionUrlResult {
   body: string;
 }
 
+/**
+ * `script-src 'self'` rather than `'unsafe-inline'`: the capture console's code is
+ * served as its own file, so inline script stays forbidden and an injected
+ * `<script>` cannot execute.
+ *
+ * `img-src` allows `blob:` and `data:` because the editor renders local files the
+ * user picked and previews the redacted result as a data URL. Neither is a remote
+ * origin — `connect-src 'none'` still means the page cannot send anything anywhere,
+ * which is the property that matters for unredacted photos.
+ */
+const CSP = [
+  "default-src 'none'",
+  "script-src 'self'",
+  "style-src 'unsafe-inline'",
+  "img-src 'self' blob: data:",
+  "connect-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResult> => {
   const path = event.rawPath ?? "/";
 
@@ -31,20 +52,17 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
     };
   }
 
-  const { status, html } = renderPath(path);
+  const { status, contentType, body } = renderPath(path);
 
   return {
     statusCode: status,
     headers: {
-      "content-type": "text/html; charset=utf-8",
+      "content-type": contentType,
       "cache-control": "no-store",
-      // The pages are self-contained: no external scripts, styles, or images, so
-      // the policy can be this tight without breaking anything.
-      "content-security-policy":
-        "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "content-security-policy": CSP,
       "x-content-type-options": "nosniff",
       "referrer-policy": "no-referrer",
     },
-    body: html,
+    body,
   };
 };

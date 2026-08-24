@@ -153,6 +153,8 @@ export const NAV: NavItem[] = [
   { href: "/", label: "Overview" },
   { href: "/productivity", label: "Productivity" },
   { href: "/alerts", label: "Alerts" },
+  { href: "/capture", label: "Capture" },
+  { href: "/bid", label: "Bid alignment" },
   { href: "/data-quality", label: "Data quality" },
 ];
 

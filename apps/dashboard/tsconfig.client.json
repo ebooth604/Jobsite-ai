@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src/client",
+    "outDir": "dist/client",
+    // Browser code: DOM instead of node. Kept a separate project so server files
+    // cannot reach for `document` and have it typecheck.
+    "lib": ["ES2023", "DOM"],
+    "types": [],
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": ["src/client/**/*.ts"]
+}
