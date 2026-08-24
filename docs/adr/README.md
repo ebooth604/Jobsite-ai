@@ -20,7 +20,7 @@ kind — a working default chosen so the build can start, not a settled answer.
 | [0008](0008-background-jobs.md) | pg-boss on the application database | Default | Moderate — loses transactional enqueue |
 | [0009](0009-mobile-app.md) | Expo (React Native), offline-first capture | Default, not urgent | Low now, high once it's in foremen's hands |
 | [0010](0010-auth.md) | AWS Cognito, server-side authorization | Default | Moderate — provider change is a user migration |
-| [0011](0011-observability.md) | Sentry for errors, OpenTelemetry SDKs, quality metrics in Postgres | Default | Low |
+| [0011](0011-observability.md) | OpenTelemetry SDKs, CloudWatch in-region, quality metrics in Postgres | Default; error vendor **[DECIDE]** | Low |
 | [0012](0012-pdf-generation.md) | Headless Chromium from HTML templates, version-pinned | Default, not urgent | Low |
 | [0013](0013-secrets.md) | AWS Secrets Manager, IAM-fetched, nothing in the repo | Default | Low |
 
@@ -36,6 +36,14 @@ work they govern starts, because they get expensive quietly:
   password reset every user sees.
 
 The rest can be changed by whoever is doing the work, on the day they disagree.
+
+## One decision deferred on purpose
+
+ADR-0011 does not name an error-tracking vendor. Sentry, which technical plan §3
+recommends, has no Canadian data region and the region is fixed at organization
+creation. Creating one in the wrong region is the single least reversible thing in
+this whole list, so the ADR runs on in-region CloudWatch and marks the vendor
+choice **[DECIDE]**.
 
 ## Two decisions that are not really defaults
 
