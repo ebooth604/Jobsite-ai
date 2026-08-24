@@ -1,11 +1,43 @@
 """Quantity estimation service.
 
 The models themselves land here after the technical spike reports its accuracy
-honestly (see the repo README). This module currently holds only the abstention
-rule, which is a policy decision rather than a modelling one.
+honestly (see the repo README). This module currently holds the abstention rule,
+which is a policy decision rather than a modelling one, plus the dataset
+provenance rules the accuracy harness is built on.
 """
 
-__all__ = ["should_abstain"]
+from .datasets import (
+    MEASURABLE_ORIGINS,
+    SIMULATED,
+    Capture,
+    SimulatedDataLeak,
+    assert_no_simulated_leak,
+    measurable,
+    synthetic_share,
+)
+from .seed import (
+    SEED_MARKER,
+    SeedSet,
+    generate_seed_captures,
+    load_seed_captures,
+    purge_seed_data,
+)
+
+__all__ = [
+    "MEASURABLE_ORIGINS",
+    "SEED_MARKER",
+    "SIMULATED",
+    "Capture",
+    "SeedSet",
+    "SimulatedDataLeak",
+    "assert_no_simulated_leak",
+    "generate_seed_captures",
+    "load_seed_captures",
+    "measurable",
+    "purge_seed_data",
+    "should_abstain",
+    "synthetic_share",
+]
 
 
 def should_abstain(confidence: float, threshold: float) -> bool:
