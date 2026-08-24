@@ -26,10 +26,15 @@ Infrastructure as code, CI/CD configuration, and environment definitions.
 Both candidate regions satisfy residency, so residency does not decide between them;
 the §3 stack already leans AWS. The ADR states the reasoning, and states plainly that
 reversal is near zero **today** and high once IAM, networking, and buckets exist.
-Founders should confirm or override before real resources land.
+Founder-confirmed 2026-08-24 (ADR-0001), so this is settled rather than defaulted.
 
 ## Status
 
-`terraform/` holds provider configuration, version pins, and a region guard that
-fails validation on any non-`ca-*` region. No compute, storage, or networking yet —
-those wait on the technical spike and on confirmation of ADR-0001.
+`terraform/` holds provider configuration, version pins, a region guard that fails
+validation on any non-`ca-*` region, and the scaffolding a footprint needs before its
+first resource: S3 remote state with per-environment backends, a `bootstrap/` root
+that creates the state bucket and lock table, shared naming and tagging, and a CI job
+that format-checks, validates, and tests the region guard.
+
+No compute, storage, or networking yet — those wait on the technical spike and on
+confirmation of ADR-0001. Nothing here has been applied; reversal is still near zero.

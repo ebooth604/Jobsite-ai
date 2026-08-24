@@ -1,6 +1,6 @@
 # ADR-0001 — Cloud provider: AWS `ca-central-1`
 
-**Status:** default, awaiting founder confirmation.
+**Status:** accepted — founder-confirmed 2026-08-24.
 **Date:** August 2026.
 **Supersedes:** the `[DECIDE]` marker in technical plan §3 and open question §13.4.
 

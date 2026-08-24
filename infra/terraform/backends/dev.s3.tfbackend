@@ -1,0 +1,8 @@
+bucket = "sitewire-tfstate-dev"
+key    = "sitewire/dev/terraform.tfstate"
+region = "ca-central-1"
+
+# Native S3 locking — a lock file held beside the state object. Replaces the
+# DynamoDB table the S3 backend used to need; `dynamodb_table` is deprecated.
+use_lockfile = true
+encrypt      = true

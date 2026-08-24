@@ -48,3 +48,17 @@ npm-debug.log*
 
 # Python tooling
 .ruff_cache/
+
+# Terraform — state is residency-bearing and secret-bearing; providers are large.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# tfvars may carry account-specific values; envs/*.tfvars are deliberate and tracked.
+*.auto.tfvars

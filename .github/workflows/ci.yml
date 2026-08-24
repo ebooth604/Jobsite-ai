@@ -57,3 +57,62 @@ jobs:
 
       - name: Test
         run: uv run pytest -q
+
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version_file: infra/terraform/.terraform-version
+
+      - name: Format check
+        run: terraform fmt -check -recursive infra/terraform
+
+      # -backend=false: validation needs no state bucket and no AWS credentials, so
+      # this runs on pull requests from forks and before bootstrap has ever applied.
+      - name: Validate root
+        working-directory: infra/terraform
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Validate bootstrap
+        working-directory: infra/terraform/bootstrap
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      # The region guard is the one piece of this config that encodes a contractual
+      # commitment (business plan §4.3), so it gets a test rather than trust.
+      #
+      # This needs `plan`, not `validate` — input-variable validation is evaluated at
+      # plan time. But `plan` refuses to run after `init -backend=false`, and the S3
+      # backend has no bucket yet, so the backend block is swapped for a local one via
+      # an override file. Without that swap every plan fails on backend init and a
+      # naive "did it fail?" check passes for the wrong reason, testing nothing.
+      #
+      # The root declares no resources, so neither plan contacts AWS. No credentials.
+      - name: Region guard
+        working-directory: infra/terraform
+        run: |
+          cat > ci_override.tf <<'OVERRIDE'
+          terraform {
+            backend "local" {}
+          }
+          OVERRIDE
+          terraform init -reconfigure -input=false
+
+          if ! terraform plan -input=false -var-file=envs/prod.tfvars > /dev/null; then
+            echo "::error::A Canadian region failed to plan — the guard is over-rejecting."
+            exit 1
+          fi
+          echo "ca-central-1 plans cleanly."
+
+          if terraform plan -input=false -var aws_region=us-east-1 -var environment=dev > /dev/null 2>&1; then
+            echo "::error::Region guard did not reject us-east-1 — residency is contractual (§4.3)."
+            exit 1
+          fi
+          echo "us-east-1 correctly rejected."

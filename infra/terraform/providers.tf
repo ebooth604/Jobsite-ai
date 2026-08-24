@@ -6,11 +6,9 @@
 provider "aws" {
   region = var.aws_region
 
+  # Sourced from locals.tf so tags are defined once and every resource inherits the
+  # same set, including Environment.
   default_tags {
-    tags = {
-      Project        = "sitewire"
-      DataResidency  = "canada"
-      ManagedBy      = "terraform"
-    }
+    tags = local.common_tags
   }
 }
