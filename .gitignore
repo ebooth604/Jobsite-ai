@@ -48,3 +48,6 @@ npm-debug.log*
 
 # Python tooling
 .ruff_cache/
+
+# Terraform backend configs name real infrastructure — keep the examples only.
+infra/terraform/envs/*.backend.hcl
