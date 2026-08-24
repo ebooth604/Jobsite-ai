@@ -7,23 +7,26 @@
  */
 
 import { createServer } from "node:http";
-import { buildDashboardHtml } from "./app.js";
+import { renderPath } from "./app.js";
 
 const PORT = Number(process.env.PORT ?? 4173);
 const HOST = "127.0.0.1";
 
 const server = createServer((req, res) => {
-  if (req.url === "/healthz") {
+  const path = (req.url ?? "/").split("?")[0] ?? "/";
+
+  if (path === "/healthz") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ status: "ok" }));
     return;
   }
 
-  res.writeHead(200, {
+  const { status, html } = renderPath(path);
+  res.writeHead(status, {
     "content-type": "text/html; charset=utf-8",
     "cache-control": "no-store",
   });
-  res.end(buildDashboardHtml());
+  res.end(html);
 });
 
 server.listen(PORT, HOST, () => {
