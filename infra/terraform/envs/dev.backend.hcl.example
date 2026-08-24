@@ -1,0 +1,9 @@
+# Copy to dev.backend.hcl and fill in from the bootstrap output.
+# The real file is gitignored: it names infrastructure, not secrets, but there is
+# no reason for it to be public either.
+
+bucket         = "REPLACE-sitewire-tfstate-dev"
+key            = "dev/terraform.tfstate"
+region         = "ca-central-1"
+dynamodb_table = "REPLACE-sitewire-tflock-dev"
+encrypt        = true
