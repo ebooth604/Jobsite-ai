@@ -150,12 +150,12 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
+  { href: "/projects", label: "Dashboard" },
   { href: "/", label: "Overview" },
   { href: "/productivity", label: "Productivity" },
   { href: "/alerts", label: "Alerts" },
   { href: "/capture", label: "Capture" },
   { href: "/bid", label: "Bid alignment" },
-  { href: "/projects", label: "Reports" },
   { href: "/data-quality", label: "Data quality" },
 ];
 

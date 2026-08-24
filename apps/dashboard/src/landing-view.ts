@@ -33,6 +33,15 @@ const LANDING_STYLES = `
     color: var(--accent); font-size: 14px; font-weight: 600; }
   .proj a.choose:hover { background: var(--accent); color: #fff; }
 
+  .site-nav { display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .site-nav a { display: block; text-decoration: none; color: inherit;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; }
+  .site-nav a:hover { border-color: var(--accent); }
+  .site-nav strong { display: block; font-size: 15px; margin-bottom: 3px; }
+  .site-nav span { font-size: 13px; color: var(--ink-2); }
+
   .aud { margin-top: 26px; }
   .aud h2 { margin-bottom: 8px; }
   .rep-grid { display: grid; gap: 12px;
@@ -99,6 +108,53 @@ function reportCard(kind: ReportKind, data: ProjectData): string {
   </div>`;
 }
 
+/**
+ * Where everything else lives. The dashboard is the first thing in the nav and
+ * the page a customer lands on, so it has to answer "what else is in here" — a
+ * top nav bar alone makes someone guess what "Bid alignment" means before
+ * clicking it.
+ */
+const SITE_SECTIONS: { href: string; title: string; blurb: string }[] = [
+  {
+    href: "/",
+    title: "Overview",
+    blurb: "Headline numbers for the selected project — factors, alerts, held-back records.",
+  },
+  {
+    href: "/productivity",
+    title: "Productivity",
+    blurb: "Every reconciled factor with the quantity and hours behind it.",
+  },
+  {
+    href: "/alerts",
+    title: "Alerts",
+    blurb: "Scope items drifting below bid rate, with the conditions found on the same captures.",
+  },
+  {
+    href: "/capture",
+    title: "Capture",
+    blurb: "Upload photos, redact faces before anything is stored, and set capture parameters.",
+  },
+  {
+    href: "/bid",
+    title: "Bid alignment",
+    blurb: "Upload a bid, derive the budgeted rate, and map labour cost codes onto it.",
+  },
+  {
+    href: "/data-quality",
+    title: "Data quality",
+    blurb: "What was deliberately excluded from the numbers, and why.",
+  },
+];
+
+function siteNav(): string {
+  const cards = SITE_SECTIONS.map(
+    (s) =>
+      `<a href="${s.href}"><strong>${escapeHtml(s.title)}</strong><span>${escapeHtml(s.blurb)}</span></a>`,
+  ).join("");
+  return `<div class="site-nav">${cards}</div>`;
+}
+
 export function landingView(all: ProjectData[], selectedId: string): string {
   const selected = all.find((d) => d.project.id === selectedId) ?? all[0];
   if (!selected) throw new Error("no projects");
@@ -130,12 +186,15 @@ export function landingView(all: ProjectData[], selectedId: string): string {
 
 <h2 style="margin-top:10px">Reports for ${escapeHtml(selected.project.name)}</h2>
 ${sections}
+
+<h2 style="margin-top:32px">Everywhere else in Sitewire</h2>
+${siteNav()}
 `;
 
   return page({
-    title: `Projects — ${selected.project.name}`,
+    title: `Dashboard — ${selected.project.name}`,
     path: "/projects",
-    heading: "Your projects",
+    heading: "Dashboard",
     lede: "Choose a project, then the report for whoever is going to read it. A report only becomes available once every figure in it resolves back to a source capture and labour-hours record.",
     projectName: selected.project.name,
     dataRegion: selected.project.dataRegion,
