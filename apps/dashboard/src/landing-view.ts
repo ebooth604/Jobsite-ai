@@ -7,6 +7,7 @@
  * needs from it is not the same document with a different logo.
  */
 
+import { resolveDemoImage } from "./admin.js";
 import { DEMO_CAPTURE, tally } from "./demo-capture.js";
 import { markupSvg } from "./demo-capture-view.js";
 import {
@@ -342,6 +343,8 @@ ${
 function captureExhibit(data: ProjectData): string {
   if (process.env.SITEWIREAI_MODE !== "dev") return "";
   if (data.project.id !== DEMO_CAPTURE.projectId) return "";
+  const imageUrl = resolveDemoImage();
+  if (!imageUrl) return "";
 
   const t = tally();
   return `
@@ -353,7 +356,7 @@ function captureExhibit(data: ProjectData): string {
     an accuracy claim.
   </div>
   <div style="position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;max-width:640px">
-    <img src="${escapeHtml(DEMO_CAPTURE.imagePath)}" alt="Annotated capture, ${escapeHtml(DEMO_CAPTURE.area)}" style="display:block;width:100%;height:auto">
+    <img src="${escapeHtml(imageUrl)}" alt="Annotated capture, ${escapeHtml(DEMO_CAPTURE.area)}" style="display:block;width:100%;height:auto">
     <div style="position:absolute;inset:0">${markupSvg(DEMO_CAPTURE)}</div>
   </div>
   <p class="muted" style="font-size:13px">

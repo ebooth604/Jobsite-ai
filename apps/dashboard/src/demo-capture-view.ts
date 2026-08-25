@@ -51,8 +51,10 @@ export function markupSvg(capture: DemoCapture): string {
         `<rect x="${pct(p.box.x)}" y="${pct(p.box.y)}" width="${pct(p.box.w)}" height="${pct(p.box.h)}"
            fill="none" stroke="#0ca30c" stroke-width="0.35" stroke-dasharray="1.6 1.2"
            vector-effect="non-scaling-stroke"/>
-         <text x="${pct(p.box.x + 0.004)}" y="${pct(p.box.y - 0.008)}" font-size="2.1"
-           fill="#0ca30c" font-family="ui-sans-serif, system-ui">${escapeHtml(p.label)}</text>`,
+         <text x="${pct(p.box.x + 0.006)}" y="${pct(p.box.y + 0.032)}" font-size="2.1"
+           fill="#0ca30c" font-family="ui-sans-serif, system-ui" font-weight="600"
+           paint-order="stroke" stroke="#0b0b0b" stroke-width="0.55" stroke-opacity="0.65"
+           >${escapeHtml(p.label)}</text>`,
     )
     .join("");
 
@@ -65,7 +67,8 @@ export function markupSvg(capture: DemoCapture): string {
           vector-effect="non-scaling-stroke"/>
         <text x="${pct(s.x + s.w / 2)}" y="${pct(s.y + s.h / 2)}" font-size="1.9"
           text-anchor="middle" fill="${colour}" font-family="ui-sans-serif, system-ui"
-          font-weight="600">${s.confidence.toFixed(2)}</text>`;
+          font-weight="600" paint-order="stroke" stroke="#0b0b0b" stroke-width="0.5"
+          stroke-opacity="0.65">${s.confidence.toFixed(2)}</text>`;
     })
     .join("");
 
@@ -75,8 +78,9 @@ export function markupSvg(capture: DemoCapture): string {
         `<rect x="${pct(c.x)}" y="${pct(c.y)}" width="${pct(c.w)}" height="${pct(c.h)}"
            fill="#d03b3b" fill-opacity="0.1" stroke="#d03b3b" stroke-width="0.4"
            stroke-dasharray="2 1" vector-effect="non-scaling-stroke"/>
-         <text x="${pct(c.x + 0.005)}" y="${pct(c.y + 0.032)}" font-size="2.1"
+         <text x="${pct(c.x + 0.005)}" y="${pct(c.y + c.h - 0.012)}" font-size="2.1"
            fill="#d03b3b" font-family="ui-sans-serif, system-ui" font-weight="600"
+           paint-order="stroke" stroke="#0b0b0b" stroke-width="0.55" stroke-opacity="0.65"
            >${escapeHtml(c.type)} ${c.confidence.toFixed(2)}</text>`,
     )
     .join("");
@@ -87,19 +91,20 @@ export function markupSvg(capture: DemoCapture): string {
   </svg>`;
 }
 
-export function demoCaptureView(imagePresent: boolean): string {
+export function demoCaptureView(imageUrl: string | null): string {
   const c = DEMO_CAPTURE;
   const t = tally(c);
 
-  const figure = imagePresent
+  const figure = imageUrl
     ? `<div class="cap-wrap">
-         <img src="${escapeHtml(c.imagePath)}" alt="Drywall room, ${escapeHtml(c.area)}">
+         <img src="${escapeHtml(imageUrl)}" alt="Drywall room, ${escapeHtml(c.area)}">
          ${markupSvg(c)}
        </div>`
     : `<div class="missing">
          <p><strong>Demo photo not found.</strong></p>
-         <p>Save it as <code>apps/dashboard/static/demo/${escapeHtml(c.fileName)}</code>
-            and reload. The annotation layer below is already wired to it.</p>
+         <p>Save it as <code>apps/dashboard/static/demo/drywall-l4.&lt;ext&gt;</code>
+            (any of .webp .jpg .jpeg .png .avif) and reload. The annotation layer
+            below is already wired to it.</p>
        </div>`;
 
   const conditions = c.conditions

@@ -43,9 +43,23 @@ export const ADMIN_PATHS = new Set(["/admin", "/admin.js", "/capture/demo"]);
 /** Where dev-only static demo assets live, relative to the compiled output. */
 const STATIC_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "static");
 
-/** The demo photo is dropped in by hand, so the page has to cope with it missing. */
-export function demoImagePresent(): boolean {
-  return existsSync(join(STATIC_ROOT, "demo", "drywall-l4.jpg"));
+/**
+ * The demo photo is dropped in by hand, so the extension is whatever the source
+ * happened to be. Stock "photos" are routinely WebP behind a .jpg name, and
+ * serving those bytes as image/jpeg is the kind of thing that works in one
+ * browser and not the next. Resolve the real file and let its extension pick the
+ * content type.
+ */
+const DEMO_BASENAME = "drywall-l4";
+const DEMO_EXTENSIONS = [".webp", ".jpg", ".jpeg", ".png", ".avif"];
+
+export function resolveDemoImage(): string | null {
+  for (const ext of DEMO_EXTENSIONS) {
+    if (existsSync(join(STATIC_ROOT, "demo", DEMO_BASENAME + ext))) {
+      return `/static/demo/${DEMO_BASENAME}${ext}`;
+    }
+  }
+  return null;
 }
 
 /**
@@ -65,6 +79,7 @@ export function readStatic(urlPath: string): { body: Buffer; contentType: string
     ".jpeg": "image/jpeg",
     ".png": "image/png",
     ".webp": "image/webp",
+    ".avif": "image/avif",
     ".svg": "image/svg+xml",
   };
   const contentType = types[ext];
@@ -116,7 +131,7 @@ export function renderAdmin(path: string, script: (path: string) => string): Adm
     return { status: 200, contentType: HTML, body: adminView() };
   }
   if (path === "/capture/demo") {
-    return { status: 200, contentType: HTML, body: demoCaptureView(demoImagePresent()) };
+    return { status: 200, contentType: HTML, body: demoCaptureView(resolveDemoImage()) };
   }
   if (path === "/admin.js") {
     return { status: 200, contentType: "text/javascript; charset=utf-8", body: script(path) };
