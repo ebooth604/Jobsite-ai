@@ -79,6 +79,7 @@ const CLIENT_SCRIPTS: Record<string, string> = {
   "/capture.js": "capture-client.js",
   "/assistant.js": "assistant-client.js",
   "/admin.js": "admin-client.js",
+  "/contact.js": "contact-client.js",
   "/bid.js": "bid-client.js",
 };
 

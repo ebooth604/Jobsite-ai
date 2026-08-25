@@ -20,6 +20,7 @@
  */
 
 import { adminView } from "./admin-view.js";
+import { contactView, helpView } from "./contact-view.js";
 
 export interface AdminResponse {
   status: number;
@@ -30,7 +31,13 @@ export interface AdminResponse {
 
 const HTML = "text/html; charset=utf-8";
 
-export const ADMIN_PATHS = new Set(["/admin", "/admin.js"]);
+/**
+ * Everything mounted only by the dev server. Contact and Help live here for now
+ * too: they are customer-facing pages, but they reference an inbox and a mail
+ * flow that do not exist yet, so shipping them would promise a reply nobody is
+ * listening for.
+ */
+export const ADMIN_PATHS = new Set(["/admin", "/admin.js", "/contact", "/contact.js", "/help"]);
 
 /** Live-mounting requires BOTH the flag and a credential. */
 export function adminEnabledRemotely(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -70,12 +77,18 @@ export const UNAUTHORIZED: AdminResponse = {
  * Renders an admin path. Callers decide whether the surface is mounted at all —
  * this only knows how to draw it.
  */
-export function renderAdmin(path: string, script: () => string): AdminResponse | null {
+export function renderAdmin(path: string, script: (path: string) => string): AdminResponse | null {
   if (path === "/admin") {
     return { status: 200, contentType: HTML, body: adminView() };
   }
-  if (path === "/admin.js") {
-    return { status: 200, contentType: "text/javascript; charset=utf-8", body: script() };
+  if (path === "/contact") {
+    return { status: 200, contentType: HTML, body: contactView() };
+  }
+  if (path === "/help") {
+    return { status: 200, contentType: HTML, body: helpView() };
+  }
+  if (path === "/admin.js" || path === "/contact.js") {
+    return { status: 200, contentType: "text/javascript; charset=utf-8", body: script(path) };
   }
   return null;
 }

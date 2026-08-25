@@ -49,7 +49,9 @@ const server = createServer((req, res) => {
       res.end("Not found.");
       return;
     }
-    const admin = renderAdmin(path, () => captureClientScriptFor("admin-client.js"));
+    const admin = renderAdmin(path, (p) =>
+      captureClientScriptFor(p === "/contact.js" ? "contact-client.js" : "admin-client.js"),
+    );
     if (admin) {
       res.writeHead(admin.status, {
         "content-type": admin.contentType,

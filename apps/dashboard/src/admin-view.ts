@@ -16,6 +16,7 @@
  *     the data that would make one possible.
  */
 
+import { ADMIN_EMAIL, CONTACT_EMAIL } from "./emails.js";
 import { escapeHtml, page } from "./ui.js";
 
 const ADMIN_STYLES = `
@@ -176,6 +177,12 @@ export function adminView(): string {
     ${field("notes", "Anything the build team needs to know", '<textarea id="notes"></textarea>')}
   </fieldset>
 
+  <p class="hint" style="margin:0 0 12px">
+    Completed records are destined for <strong>${escapeHtml(ADMIN_EMAIL)}</strong>.
+    No mail transport is wired up yet, so for now download the JSON and send it
+    yourself — the page will not pretend it was delivered.
+  </p>
+
   <div class="actions">
     <button type="submit">Create onboarding record</button>
     <button type="button" class="secondary" id="download" hidden>Download JSON</button>
@@ -198,6 +205,6 @@ export function adminView(): string {
     projectName: "Internal",
     dataRegion: "ca-central-1",
     body,
-    footer: "SiteWireAi admin · local only · not deployed",
+    footer: `SiteWireAi admin · records to ${ADMIN_EMAIL} · customer contact ${CONTACT_EMAIL} · local only`,
   });
 }
