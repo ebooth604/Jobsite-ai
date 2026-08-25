@@ -10,16 +10,26 @@ import type { ScopeItem } from "./types.js";
 import { escapeHtml, page } from "./ui.js";
 
 /**
- * The annotated demo capture is a dev-only route, so the link to it must not
- * render on the deployed site — a nav link that 404s is worse than no link.
- * Lambda never sets SITEWIREAI_MODE; the local dev server does.
+ * The annotated capture is the single most explanatory thing in the demo — it is
+ * what the rest of the product is downstream of. It was a muted footnote, which
+ * meant nobody clicked it. Now it is a card at the top of the console.
  */
 function demoLink(): string {
-  if (process.env.SITEWIREAI_MODE !== "dev") return "";
-  return `<p class="muted" style="font-size:13px;margin:0 0 14px">
-  See what a capture looks like once the model has run over it:
-  <a href="/capture/demo">open the annotated demo capture</a> (dev only).
-</p>
+  return `<a class="demo-cta" href="/capture/demo">
+  <span class="demo-cta-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.5" y="4.5" width="19" height="15" rx="2"/>
+      <path d="M7 9.5h4v5H7zM14 9.5h3v5h-3z"/>
+    </svg>
+  </span>
+  <span class="demo-cta-text">
+    <strong>See an annotated capture</strong>
+    <span>Board detections with confidences, segmented wall planes and flagged
+      site conditions — what the model produces from one photo.</span>
+  </span>
+  <span class="demo-cta-go" aria-hidden="true">→</span>
+</a>
 `;
 }
 
@@ -87,6 +97,17 @@ const CAPTURE_STYLES = `
   .chip { display: inline-block; margin: 4px 6px 0 0; padding: 2px 8px;
     border-radius: 999px; border: 1px solid var(--line); font-size: 11px;
     color: var(--muted); }
+  .demo-cta { display: flex; gap: 14px; align-items: center; text-decoration: none;
+    color: inherit; background: var(--panel); border: 1px solid var(--accent);
+    border-left-width: 4px; border-radius: 10px; padding: 14px 16px;
+    margin: 0 0 18px; }
+  .demo-cta:hover { background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
+  .demo-cta-icon { color: var(--accent); flex: 0 0 auto; display: flex; }
+  .demo-cta-text { display: flex; flex-direction: column; gap: 2px; }
+  .demo-cta-text strong { font-size: 15px; }
+  .demo-cta-text span { font-size: 13px; color: var(--ink-2); }
+  .demo-cta-go { margin-left: auto; color: var(--accent); font-size: 20px;
+    flex: 0 0 auto; }
   .linkish { color: var(--accent); font-size: 13px; white-space: nowrap;
     display: block; background: none; border: none; padding: 0; cursor: pointer;
     font-family: inherit; text-align: left; }
@@ -116,6 +137,7 @@ export function captureView(
   const body = `
 <style>${CAPTURE_STYLES}</style>
 
+${demoLink()}
 <div class="note" style="margin-bottom:16px">
   <strong>Photos stay in this tab unless you press "Describe with AI".</strong>
   Reading, redacting and previewing all happen locally — nothing is uploaded by
@@ -218,7 +240,7 @@ export function captureView(
   </div>
 </div>
 
-${demoLink()}<h2>Prepared captures (<span id="queue-count">0</span>)</h2>
+<h2>Prepared captures (<span id="queue-count">0</span>)</h2>
 <p id="storage-note" class="muted"></p>
 <div style="margin-bottom:10px">
   <button type="button" id="clear-all" class="btnish danger" hidden>Clear all saved captures</button>

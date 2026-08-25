@@ -1,5 +1,5 @@
 /**
- * Annotated demo capture — dev only.
+ * Annotated demo capture.
  *
  * The markup layer is inline SVG over the photo, positioned in a 0–100 viewBox
  * with `preserveAspectRatio="none"` so the boxes track the image at any rendered
@@ -122,7 +122,7 @@ export function demoCaptureView(imageUrl: string | null): string {
   <strong>Real photograph, invented numbers.</strong> Every box, count and
   confidence on this image was made up for the demo — nobody measured this room.
   The capture is <code>origin: "simulated"</code>, so it can never enter a held-out
-  set or contribute to an accuracy figure. Dev only; not on the deployed site.
+  set or contribute to an accuracy figure.
 </div>
 
 ${figure}
@@ -182,6 +182,6 @@ ${figure}
     projectName: "Riverbend Mixed-Use — Tower B",
     dataRegion: "ca-central-1",
     body,
-    footer: "SiteWireAi · demo capture · dev only",
+    footer: "SiteWireAi · demo capture · simulated data",
   });
 }

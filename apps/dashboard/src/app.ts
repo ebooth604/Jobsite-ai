@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { bidView } from "./bid-view.js";
 import { captureView } from "./capture-view.js";
 import { contactView, helpView } from "./contact-view.js";
+import { demoCaptureView } from "./demo-capture-view.js";
 import { landingView, reportView } from "./landing-view.js";
 import { detectDrift, reconcile } from "./reconcile.js";
 import { type ProjectData, readiness, reportKind } from "./reports.js";
@@ -29,6 +30,7 @@ import {
   KILMER_SCOPE_ITEMS,
   SCOPE_ITEMS,
 } from "./seed.js";
+import { readStatic, resolveDemoImage, type StaticAsset } from "./static-assets.js";
 import type { Project } from "./types.js";
 
 /** Every project's rows in one place, filtered per project on demand. */
@@ -61,6 +63,7 @@ export function buildViewModel(): ViewModel {
 }
 
 const ROUTES: Record<string, (m: ViewModel) => string> = {
+  "/capture/demo": () => demoCaptureView(resolveDemoImage()),
   "/": overview,
   "/productivity": productivity,
   "/alerts": alerts,
@@ -101,6 +104,16 @@ export interface RenderResult {
 }
 
 const HTML = "text/html; charset=utf-8";
+
+/**
+ * Static assets are bytes, not text, so they are returned separately rather than
+ * squeezed into RenderResult's string body. Callers hand them to their transport
+ * the way it wants them — raw down a socket locally, base64 through Lambda.
+ */
+export function renderStatic(rawPath: string): StaticAsset | null {
+  if (!rawPath.startsWith("/static/")) return null;
+  return readStatic(rawPath);
+}
 
 /** Unknown paths fall back to the overview rather than a dead end mid-demo. */
 export function renderPath(rawPath: string): RenderResult {

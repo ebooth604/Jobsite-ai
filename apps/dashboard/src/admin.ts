@@ -19,11 +19,7 @@
  * already named for in technical plan §3.
  */
 
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { adminView } from "./admin-view.js";
-import { demoCaptureView } from "./demo-capture-view.js";
 
 export interface AdminResponse {
   status: number;
@@ -38,55 +34,7 @@ const HTML = "text/html; charset=utf-8";
  * Mounted only by the dev server. Contact and Help used to live here; they are
  * public now and route through app.ts like any other page.
  */
-export const ADMIN_PATHS = new Set(["/admin", "/admin.js", "/capture/demo"]);
-
-/** Where dev-only static demo assets live, relative to the compiled output. */
-const STATIC_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "static");
-
-/**
- * The demo photo is dropped in by hand, so the extension is whatever the source
- * happened to be. Stock "photos" are routinely WebP behind a .jpg name, and
- * serving those bytes as image/jpeg is the kind of thing that works in one
- * browser and not the next. Resolve the real file and let its extension pick the
- * content type.
- */
-const DEMO_BASENAME = "drywall-l4";
-const DEMO_EXTENSIONS = [".webp", ".jpg", ".jpeg", ".png", ".avif"];
-
-export function resolveDemoImage(): string | null {
-  for (const ext of DEMO_EXTENSIONS) {
-    if (existsSync(join(STATIC_ROOT, "demo", DEMO_BASENAME + ext))) {
-      return `/static/demo/${DEMO_BASENAME}${ext}`;
-    }
-  }
-  return null;
-}
-
-/**
- * Serves a file from the dev-only static root. Path traversal is blocked by
- * resolving and then checking containment, rather than by filtering "..", which
- * misses encodings.
- */
-export function readStatic(urlPath: string): { body: Buffer; contentType: string } | null {
-  const rel = urlPath.replace(/^\/static\//, "");
-  const full = resolve(STATIC_ROOT, rel);
-  if (!full.startsWith(resolve(STATIC_ROOT))) return null;
-  if (!existsSync(full) || !statSync(full).isFile()) return null;
-
-  const ext = full.slice(full.lastIndexOf(".")).toLowerCase();
-  const types: Record<string, string> = {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".webp": "image/webp",
-    ".avif": "image/avif",
-    ".svg": "image/svg+xml",
-  };
-  const contentType = types[ext];
-  if (!contentType) return null;
-
-  return { body: readFileSync(full), contentType };
-}
+export const ADMIN_PATHS = new Set(["/admin", "/admin.js"]);
 
 /** Live-mounting requires BOTH the flag and a credential. */
 export function adminEnabledRemotely(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -129,9 +77,6 @@ export const UNAUTHORIZED: AdminResponse = {
 export function renderAdmin(path: string, script: (path: string) => string): AdminResponse | null {
   if (path === "/admin") {
     return { status: 200, contentType: HTML, body: adminView() };
-  }
-  if (path === "/capture/demo") {
-    return { status: 200, contentType: HTML, body: demoCaptureView(resolveDemoImage()) };
   }
   if (path === "/admin.js") {
     return { status: 200, contentType: "text/javascript; charset=utf-8", body: script(path) };

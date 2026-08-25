@@ -15,12 +15,13 @@
  */
 
 import { createServer } from "node:http";
-import { ADMIN_PATHS, readStatic, renderAdmin } from "./admin.js";
+import { ADMIN_PATHS, renderAdmin } from "./admin.js";
 import {
   captureClientScriptFor,
   handleAssist,
   handleVision,
   renderPath,
+  renderStatic,
   renderWithQuery,
 } from "./app.js";
 
@@ -44,10 +45,16 @@ const server = createServer((req, res) => {
     return;
   }
 
-  if (adminMounted && path.startsWith("/static/")) {
-    const asset = readStatic(path);
+  // Static assets ship now, so both modes serve them — rc has to mirror what the
+  // deployed site does, and gating this on dev is exactly the drift rc exists to
+  // catch.
+  if (path.startsWith("/static/")) {
+    const asset = renderStatic(path);
     if (asset) {
-      res.writeHead(200, { "content-type": asset.contentType, "cache-control": "no-store" });
+      res.writeHead(200, {
+        "content-type": asset.contentType,
+        "cache-control": "public, max-age=3600",
+      });
       res.end(asset.body);
       return;
     }

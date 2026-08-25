@@ -8,7 +8,7 @@
  * architecture.
  */
 
-import { handleAssist, handleVision, renderPath, renderWithQuery } from "./app.js";
+import { handleAssist, handleVision, renderPath, renderStatic, renderWithQuery } from "./app.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
@@ -22,6 +22,7 @@ interface FunctionUrlResult {
   statusCode: number;
   headers: Record<string, string>;
   body: string;
+  isBase64Encoded?: boolean;
 }
 
 /**
@@ -72,6 +73,25 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
         "x-content-type-options": "nosniff",
       },
       body: ai.body,
+    };
+  }
+
+  // Images are bytes. API Gateway carries them base64-encoded with the flag set;
+  // returning raw bytes as a string corrupts them silently, which looks like a
+  // broken image rather than an error.
+  const asset = renderStatic(path);
+  if (asset) {
+    return {
+      statusCode: 200,
+      headers: {
+        "content-type": asset.contentType,
+        // Static demo imagery is immutable in practice and worth caching, unlike
+        // every page here, which is regenerated per request.
+        "cache-control": "public, max-age=3600",
+        "x-content-type-options": "nosniff",
+      },
+      body: asset.body.toString("base64"),
+      isBase64Encoded: true,
     };
   }
 

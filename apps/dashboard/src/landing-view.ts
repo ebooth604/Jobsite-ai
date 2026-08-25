@@ -7,7 +7,6 @@
  * needs from it is not the same document with a different logo.
  */
 
-import { resolveDemoImage } from "./admin.js";
 import { DEMO_CAPTURE, tally } from "./demo-capture.js";
 import { markupSvg } from "./demo-capture-view.js";
 import {
@@ -19,6 +18,7 @@ import {
   readiness,
   traceFactors,
 } from "./reports.js";
+import { resolveDemoImage } from "./static-assets.js";
 import { escapeHtml, page, statusFor, statusPill } from "./ui.js";
 
 const LANDING_STYLES = `
@@ -333,7 +333,7 @@ ${
 /**
  * Optional photographic exhibit.
  *
- * Only offered in dev, and only on the project the demo capture belongs to. A
+ * Offered only on the project the demo capture belongs to. A
  * client who wants the photograph in their package gets it with the annotation
  * layer intact and its simulated origin stated on the exhibit itself — a
  * photograph in an evidence package is the most persuasive thing in it, which is
@@ -341,7 +341,6 @@ ${
  * proof.
  */
 function captureExhibit(data: ProjectData): string {
-  if (process.env.SITEWIREAI_MODE !== "dev") return "";
   if (data.project.id !== DEMO_CAPTURE.projectId) return "";
   const imageUrl = resolveDemoImage();
   if (!imageUrl) return "";
