@@ -1,6 +1,6 @@
-# Sitewire — Technical Implementation Plan
+# SiteWireAi — Technical Implementation Plan
 
-**Companion to: Sitewire Business Plan v0.3 (August 2026).**
+**Companion to: SiteWireAi Business Plan v0.3 (August 2026).**
 **Audience: engineering (including AI coding agents, e.g. Claude Code) starting implementation.**
 **Status: pre-build. This is the v1 (first 9 months) technical spec matching Business Plan §4 and §13.**
 

@@ -1,4 +1,4 @@
-import { isMeasurableOrigin } from "@sitewire/shared-types";
+import { isMeasurableOrigin } from "@sitewireai/shared-types";
 import { describe, expect, it } from "vitest";
 import { detectDrift, isCountableEstimate, isJoinableHours, reconcile } from "./reconcile.js";
 import {

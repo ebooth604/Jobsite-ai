@@ -180,14 +180,14 @@ export function landingView(all: ProjectData[], selectedId: string): string {
 
 <div class="note" style="margin-top:26px">
   <strong>These are exports, not filings.</strong> A package is something a
-  subcontractor or their counsel sends. Sitewire does not file to ODACC or to a BC
+  subcontractor or their counsel sends. SiteWireAi does not file to ODACC or to a BC
   nominating authority, and nothing here submits anything on your behalf.
 </div>
 
 <h2 style="margin-top:10px">Reports for ${escapeHtml(selected.project.name)}</h2>
 ${sections}
 
-<h2 style="margin-top:32px">Everywhere else in Sitewire</h2>
+<h2 style="margin-top:32px">Everywhere else in SiteWireAi</h2>
 ${siteNav()}
 `;
 
@@ -321,6 +321,6 @@ ${
     projectName: data.project.name,
     dataRegion: data.project.dataRegion,
     body,
-    footer: "Sitewire demo · export only · not a filing",
+    footer: "SiteWireAi demo · export only · not a filing",
   });
 }

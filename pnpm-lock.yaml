@@ -20,7 +20,7 @@ importers:
 
   apps/dashboard:
     dependencies:
-      '@sitewire/shared-types':
+      '@sitewireai/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
     devDependencies:

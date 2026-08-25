@@ -2,7 +2,7 @@
 
 Project repo for a jobsite AI product sold to **Canadian specialty trade subcontractors** — production tracking from ordinary jobsite photos, joined to labour hours and bid productivity rates, plus contemporaneous evidence packages for change orders and statutory adjudication.
 
-Working title: **Sitewire**.
+Working title: **SiteWireAi**.
 
 This repo holds the business plan, the technical implementation plan that follows from it, and the directory skeleton those plans describe. The skeleton is structure only — every service directory carries a README naming what it will own and which commitments bind it, and no application code yet.
 

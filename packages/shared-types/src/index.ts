@@ -1,5 +1,5 @@
 /**
- * Shared entity types for Sitewire.
+ * Shared entity types for SiteWireAi.
  *
  * The full data model from technical plan §4 lands here when that work starts.
  * For now this package exists to prove the toolchain resolves across the

@@ -1,5 +1,5 @@
 /**
- * Local preview: `pnpm --filter @sitewire/dashboard run serve`.
+ * Local preview: `pnpm --filter @sitewireai/dashboard run serve`.
  *
  * Bound to loopback only. The demo renders synthetic data, but a dev server that
  * quietly listens on every interface is a habit worth not forming in a codebase
@@ -44,5 +44,5 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  process.stdout.write(`Sitewire demo dashboard: http://${HOST}:${PORT}\n`);
+  process.stdout.write(`SiteWireAi demo dashboard: http://${HOST}:${PORT}\n`);
 });

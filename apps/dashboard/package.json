@@ -1,5 +1,5 @@
 {
-  "name": "@sitewire/dashboard",
+  "name": "@sitewireai/dashboard",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,7 +8,7 @@
     "serve": "tsc --build && node dist/local-server.js"
   },
   "dependencies": {
-    "@sitewire/shared-types": "workspace:*"
+    "@sitewireai/shared-types": "workspace:*"
   },
   "devDependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1116.0",

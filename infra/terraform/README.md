@@ -1,6 +1,6 @@
 # infra/terraform
 
-Terraform roots for the Sitewire footprint.
+Terraform roots for the SiteWireAi footprint.
 
 ## What is here now
 

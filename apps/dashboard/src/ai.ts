@@ -119,7 +119,7 @@ function tools(scopeItems: ScopeItem[]): Tool[] {
 
 function systemPrompt(context: string): string {
   return [
-    "You are the assistant inside Sitewire, a construction productivity tool.",
+    "You are the assistant inside SiteWireAi, a construction productivity tool.",
     "Help the user fill forms, find pages, and understand the numbers.",
     "",
     "Hard rules you must never break:",
@@ -295,7 +295,7 @@ export async function describeCapture(
       system: [
         {
           text: [
-            "You are looking at a redacted construction site photo for Sitewire.",
+            "You are looking at a redacted construction site photo for SiteWireAi.",
             "",
             "Describe in two sentences what trade work is visible and any obstruction,",
             "stacked trade, or access problem. Then, if you can tell, use the tool to",

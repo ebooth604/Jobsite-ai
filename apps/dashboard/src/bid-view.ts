@@ -122,6 +122,6 @@ export function bidView(
     projectName: project.name,
     dataRegion: project.dataRegion,
     body,
-    footer: "Sitewire demo · client-side only · nothing uploaded",
+    footer: "SiteWireAi demo · client-side only · nothing uploaded",
   });
 }

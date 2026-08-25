@@ -223,6 +223,6 @@ export function captureView(
     projectName: project.name,
     dataRegion: project.dataRegion,
     body,
-    footer: `Sitewire demo · client-side only · nothing uploaded · ${escapeHtml(project.dataRegion)}`,
+    footer: `SiteWireAi demo · client-side only · nothing uploaded · ${escapeHtml(project.dataRegion)}`,
   });
 }

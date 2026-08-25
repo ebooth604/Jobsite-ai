@@ -1,4 +1,4 @@
-# Sitewire — Jobsite AI for Canadian Specialty Subcontractors
+# SiteWireAi — Jobsite AI for Canadian Specialty Subcontractors
 
 **Working title. Initial business plan, v0.3 — August 2026.**
 **Based in Vancouver, British Columbia. Canadian market only.** All figures CAD.

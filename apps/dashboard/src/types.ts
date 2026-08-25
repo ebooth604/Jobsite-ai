@@ -2,7 +2,7 @@
  * Demo-scoped subset of the technical plan §4 data model.
  *
  * Only the entities the investor demo actually renders are here. The full model
- * belongs in @sitewire/shared-types when the real services exist; duplicating it
+ * belongs in @sitewireai/shared-types when the real services exist; duplicating it
  * now would create two sources of truth for a schema that is still moving.
  *
  * `CaptureOrigin` is deliberately imported rather than redeclared — it is the one
@@ -10,7 +10,7 @@
  * simulated capture slip past `isMeasurableOrigin`.
  */
 
-import type { CaptureOrigin } from "@sitewire/shared-types";
+import type { CaptureOrigin } from "@sitewireai/shared-types";
 
 export interface ScopeItem {
   id: string;

@@ -27,7 +27,7 @@ export interface ViewModel {
 }
 
 const footerFor = (m: ViewModel): string =>
-  `Sitewire demo · ${m.captures.length} simulated captures · ${m.factors.length} reconciled factor(s) · served from ${m.project.dataRegion}`;
+  `SiteWireAi demo · ${m.captures.length} simulated captures · ${m.factors.length} reconciled factor(s) · served from ${m.project.dataRegion}`;
 
 function scopeMap(m: ViewModel): Map<string, ScopeItem> {
   return new Map(m.scopeItems.map((s) => [s.id, s]));
@@ -149,7 +149,7 @@ export function overview(m: ViewModel): string {
   ].join("");
 
   return page({
-    title: `Sitewire — ${m.project.name}`,
+    title: `SiteWireAi — ${m.project.name}`,
     path: "/",
     heading: m.project.name,
     lede: `${m.project.address} · ${m.project.province}. Quantity, labour hours and bid rate reconciled into a productivity factor per scope item.`,
