@@ -1,24 +1,64 @@
 /**
- * Local preview: `pnpm --filter @sitewireai/dashboard run serve`.
+ * Local preview, in two modes.
  *
- * Bound to loopback only. The demo renders synthetic data, but a dev server that
- * quietly listens on every interface is a habit worth not forming in a codebase
- * that will later handle jobsite media.
+ *   dev (default, :4173) — everything, including the admin onboarding surface.
+ *   rc  (:4174)          — exactly what the deployed Lambda serves. No admin.
+ *
+ * The point of rc mode is that "works on my machine" and "works on the site" stop
+ * being different questions. If a page works in dev but not rc, the difference is
+ * the admin mount — and that is now something you can see rather than remember.
+ *
+ * Bound to loopback in both modes. The demo renders synthetic data, but a dev
+ * server that quietly listens on every interface is a habit worth not forming in a
+ * codebase that will later handle jobsite media — doubly so now that an
+ * unauthenticated admin form is one of the things it serves.
  */
 
 import { createServer } from "node:http";
-import { handleAssist, handleVision, renderPath, renderWithQuery } from "./app.js";
+import { ADMIN_PATHS, renderAdmin } from "./admin.js";
+import {
+  captureClientScriptFor,
+  handleAssist,
+  handleVision,
+  renderPath,
+  renderWithQuery,
+} from "./app.js";
 
-const PORT = Number(process.env.PORT ?? 4173);
+type Mode = "dev" | "rc";
+
+const MODE: Mode = process.env.SITEWIREAI_MODE === "rc" ? "rc" : "dev";
+const PORT = Number(process.env.PORT ?? (MODE === "rc" ? 4174 : 4173));
 const HOST = "127.0.0.1";
+
+/** Only dev mounts admin. rc mirrors production, where it is absent. */
+const adminMounted = MODE === "dev";
 
 const server = createServer((req, res) => {
   const path = (req.url ?? "/").split("?")[0] ?? "/";
 
   if (path === "/healthz") {
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ status: "ok" }));
+    res.end(JSON.stringify({ status: "ok", mode: MODE, adminMounted }));
     return;
+  }
+
+  if (ADMIN_PATHS.has(path)) {
+    if (!adminMounted) {
+      // The same answer the deployed site gives: this route does not exist here.
+      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      res.end("Not found.");
+      return;
+    }
+    const admin = renderAdmin(path, () => captureClientScriptFor("admin-client.js"));
+    if (admin) {
+      res.writeHead(admin.status, {
+        "content-type": admin.contentType,
+        "cache-control": "no-store",
+        ...(admin.headers ?? {}),
+      });
+      res.end(admin.body);
+      return;
+    }
   }
 
   if ((path === "/ai" || path === "/ai/vision") && req.method === "POST") {
@@ -44,5 +84,8 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  process.stdout.write(`SiteWireAi demo dashboard: http://${HOST}:${PORT}\n`);
+  const admin = adminMounted
+    ? `  · admin: http://${HOST}:${PORT}/admin`
+    : "  · admin not mounted (production parity)";
+  process.stdout.write(`SiteWireAi [${MODE}] http://${HOST}:${PORT}${admin}\n`);
 });

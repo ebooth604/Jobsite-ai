@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --build",
-    "serve": "tsc --build && node dist/local-server.js"
+    "serve": "tsc --build && node dist/local-server.js",
+    "serve:rc": "tsc --build && node -e \"process.env.SITEWIREAI_MODE=\\\"rc\\\";import(\\\"./dist/local-server.js\\\")\""
   },
   "dependencies": {
     "@sitewireai/shared-types": "workspace:*"

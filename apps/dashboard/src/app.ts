@@ -78,6 +78,7 @@ const scriptCache = new Map<string, string>();
 const CLIENT_SCRIPTS: Record<string, string> = {
   "/capture.js": "capture-client.js",
   "/assistant.js": "assistant-client.js",
+  "/admin.js": "admin-client.js",
   "/bid.js": "bid-client.js",
 };
 
@@ -236,4 +237,9 @@ export async function handleVision(rawBody: string): Promise<RenderResult> {
       body: JSON.stringify({ description: `Could not read that photo — ${message}`, fields: {} }),
     };
   }
+}
+
+/** Reads one compiled browser bundle by file name. Used by the admin mount. */
+export function captureClientScriptFor(file: string): string {
+  return clientScript(file);
 }
