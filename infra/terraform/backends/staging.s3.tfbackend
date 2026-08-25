@@ -1,5 +1,5 @@
-bucket = "sitewire-tfstate-staging"
-key    = "sitewire/staging/terraform.tfstate"
+bucket = "sitewireai-tfstate-staging"
+key    = "sitewireai/staging/terraform.tfstate"
 region = "ca-central-1"
 
 # Native S3 locking — a lock file held beside the state object. Replaces the

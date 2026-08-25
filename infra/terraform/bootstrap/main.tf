@@ -31,7 +31,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project       = "sitewire"
+      Project       = "sitewireai"
       Environment   = var.environment
       DataResidency = "canada"
       ManagedBy     = "terraform"
@@ -62,7 +62,7 @@ variable "environment" {
 }
 
 locals {
-  bucket_name = "sitewire-tfstate-${var.environment}"
+  bucket_name = "sitewireai-tfstate-${var.environment}"
 }
 
 resource "aws_s3_bucket" "tfstate" {

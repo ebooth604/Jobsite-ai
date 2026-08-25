@@ -4,7 +4,7 @@
 # hand-written "sitewire-prod-media" that drifts from its siblings.
 
 locals {
-  project = "sitewire"
+  project = "sitewireai"
 
   name_prefix = "${local.project}-${var.environment}"
 
