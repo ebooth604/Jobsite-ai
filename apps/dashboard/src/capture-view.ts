@@ -9,6 +9,20 @@
 import type { ScopeItem } from "./types.js";
 import { escapeHtml, page } from "./ui.js";
 
+/**
+ * The annotated demo capture is a dev-only route, so the link to it must not
+ * render on the deployed site — a nav link that 404s is worse than no link.
+ * Lambda never sets SITEWIREAI_MODE; the local dev server does.
+ */
+function demoLink(): string {
+  if (process.env.SITEWIREAI_MODE !== "dev") return "";
+  return `<p class="muted" style="font-size:13px;margin:0 0 14px">
+  See what a capture looks like once the model has run over it:
+  <a href="/capture/demo">open the annotated demo capture</a> (dev only).
+</p>
+`;
+}
+
 const CAPTURE_STYLES = `
   .capture-grid { display: grid; gap: 16px; grid-template-columns: 1fr 320px;
     align-items: start; }
@@ -204,7 +218,7 @@ export function captureView(
   </div>
 </div>
 
-<h2>Prepared captures (<span id="queue-count">0</span>)</h2>
+${demoLink()}<h2>Prepared captures (<span id="queue-count">0</span>)</h2>
 <p id="storage-note" class="muted"></p>
 <div style="margin-bottom:10px">
   <button type="button" id="clear-all" class="btnish danger" hidden>Clear all saved captures</button>

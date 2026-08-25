@@ -15,7 +15,7 @@
  */
 
 import { createServer } from "node:http";
-import { ADMIN_PATHS, renderAdmin } from "./admin.js";
+import { ADMIN_PATHS, readStatic, renderAdmin } from "./admin.js";
 import {
   captureClientScriptFor,
   handleAssist,
@@ -27,6 +27,8 @@ import {
 type Mode = "dev" | "rc";
 
 const MODE: Mode = process.env.SITEWIREAI_MODE === "rc" ? "rc" : "dev";
+process.env.SITEWIREAI_MODE = MODE;
+
 const PORT = Number(process.env.PORT ?? (MODE === "rc" ? 4174 : 4173));
 const HOST = "127.0.0.1";
 
@@ -39,6 +41,18 @@ const server = createServer((req, res) => {
   if (path === "/healthz") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ status: "ok", mode: MODE, adminMounted }));
+    return;
+  }
+
+  if (adminMounted && path.startsWith("/static/")) {
+    const asset = readStatic(path);
+    if (asset) {
+      res.writeHead(200, { "content-type": asset.contentType, "cache-control": "no-store" });
+      res.end(asset.body);
+      return;
+    }
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("Not found.");
     return;
   }
 

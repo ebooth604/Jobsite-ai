@@ -7,6 +7,8 @@
  * needs from it is not the same document with a different logo.
  */
 
+import { DEMO_CAPTURE, tally } from "./demo-capture.js";
+import { markupSvg } from "./demo-capture-view.js";
 import {
   AUDIENCE_LABEL,
   type Audience,
@@ -297,6 +299,8 @@ ${
   <h2>Conditions recorded on the same captures</h2>
   ${conditions}
 
+  ${captureExhibit(data)}
+
   <h2>Deliberately excluded</h2>
   ${
     exclusions.length
@@ -323,4 +327,39 @@ ${
     body,
     footer: "SiteWireAi demo · export only · not a filing",
   });
+}
+
+/**
+ * Optional photographic exhibit.
+ *
+ * Only offered in dev, and only on the project the demo capture belongs to. A
+ * client who wants the photograph in their package gets it with the annotation
+ * layer intact and its simulated origin stated on the exhibit itself — a
+ * photograph in an evidence package is the most persuasive thing in it, which is
+ * exactly why it must carry its provenance rather than sit there looking like
+ * proof.
+ */
+function captureExhibit(data: ProjectData): string {
+  if (process.env.SITEWIREAI_MODE !== "dev") return "";
+  if (data.project.id !== DEMO_CAPTURE.projectId) return "";
+
+  const t = tally();
+  return `
+  <h2>Exhibit A — annotated capture</h2>
+  <div class="banner">
+    <strong>Real photograph, invented numbers.</strong> This capture is
+    <code>origin: "simulated"</code>. It illustrates what the annotation layer
+    produces; no figure on it describes measured work, and none of it may support
+    an accuracy claim.
+  </div>
+  <div style="position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;max-width:640px">
+    <img src="${escapeHtml(DEMO_CAPTURE.imagePath)}" alt="Annotated capture, ${escapeHtml(DEMO_CAPTURE.area)}" style="display:block;width:100%;height:auto">
+    <div style="position:absolute;inset:0">${markupSvg(DEMO_CAPTURE)}</div>
+  </div>
+  <p class="muted" style="font-size:13px">
+    ${escapeHtml(DEMO_CAPTURE.area)} · ${escapeHtml(DEMO_CAPTURE.capturedAt)} ·
+    ${t.counted} board counted, ${t.belowThreshold} below threshold ·
+    model ${escapeHtml(DEMO_CAPTURE.modelVersion)} ·
+    face blur ${escapeHtml(DEMO_CAPTURE.faceBlurStatus)}
+  </p>`;
 }
