@@ -20,7 +20,6 @@
  */
 
 import { adminView } from "./admin-view.js";
-import { contactView, helpView } from "./contact-view.js";
 
 export interface AdminResponse {
   status: number;
@@ -32,12 +31,10 @@ export interface AdminResponse {
 const HTML = "text/html; charset=utf-8";
 
 /**
- * Everything mounted only by the dev server. Contact and Help live here for now
- * too: they are customer-facing pages, but they reference an inbox and a mail
- * flow that do not exist yet, so shipping them would promise a reply nobody is
- * listening for.
+ * Mounted only by the dev server. Contact and Help used to live here; they are
+ * public now and route through app.ts like any other page.
  */
-export const ADMIN_PATHS = new Set(["/admin", "/admin.js", "/contact", "/contact.js", "/help"]);
+export const ADMIN_PATHS = new Set(["/admin", "/admin.js"]);
 
 /** Live-mounting requires BOTH the flag and a credential. */
 export function adminEnabledRemotely(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -81,13 +78,7 @@ export function renderAdmin(path: string, script: (path: string) => string): Adm
   if (path === "/admin") {
     return { status: 200, contentType: HTML, body: adminView() };
   }
-  if (path === "/contact") {
-    return { status: 200, contentType: HTML, body: contactView() };
-  }
-  if (path === "/help") {
-    return { status: 200, contentType: HTML, body: helpView() };
-  }
-  if (path === "/admin.js" || path === "/contact.js") {
+  if (path === "/admin.js") {
     return { status: 200, contentType: "text/javascript; charset=utf-8", body: script(path) };
   }
   return null;

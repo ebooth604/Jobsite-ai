@@ -1,5 +1,5 @@
 /**
- * Contact and Help — dev-only for now, mounted alongside admin.
+ * Contact and Help — public pages.
  *
  * The contact form composes a message and hands it to the visitor's mail client
  * rather than posting it anywhere. There is no mail transport behind this, and a
@@ -41,16 +41,16 @@ const CONTACT_STYLES = `
     padding: 12px 14px; border-radius: 6px; margin-bottom: 18px; font-size: 14px; }
 `;
 
-const devNote = `<div class="devnote">
-  <strong>Dev only.</strong> This page is served by the local dev server and is not
-  on the deployed site yet. Nothing here sends mail — there is no mail transport
-  wired up, so the form opens your mail client instead of pretending to deliver.
+const mailNote = `<div class="devnote">
+  <strong>No mail transport yet.</strong> This form does not post anywhere — it
+  composes the message and hands it to your own mail client, so nothing is
+  silently dropped. Email us directly if that does not open.
 </div>`;
 
 export function contactView(): string {
   const body = `
 <style>${CONTACT_STYLES}</style>
-${devNote}
+${mailNote}
 
 <div class="contact-grid">
   <form class="card" id="contact-form" novalidate>
@@ -127,14 +127,13 @@ ${devNote}
     projectName: "SiteWireAi",
     dataRegion: "ca-central-1",
     body,
-    footer: `SiteWireAi · ${CONTACT_EMAIL} · dev only`,
+    footer: `SiteWireAi · ${CONTACT_EMAIL}`,
   });
 }
 
 export function helpView(): string {
   const body = `
 <style>${CONTACT_STYLES}</style>
-${devNote}
 
 <div class="contact-grid">
   <div class="card">
@@ -167,7 +166,7 @@ ${devNote}
       <dd>No, and it says so on its face. BC's Construction Prompt Payment Act
         regulations were still in consultation as of mid-2026, with no in-force date
         and no designated authority. The export is shaped against Ontario practice
-        as a working draft. Sitewire does not file anything on your behalf.</dd>
+        as a working draft. SiteWireAi does not file anything on your behalf.</dd>
 
       <dt>What happens to faces in photos?</dt>
       <dd>They are redacted before anything is stored — on device, and re-checked
@@ -201,6 +200,6 @@ ${devNote}
     projectName: "SiteWireAi",
     dataRegion: "ca-central-1",
     body,
-    footer: `SiteWireAi · ${CONTACT_EMAIL} · dev only`,
+    footer: `SiteWireAi · ${CONTACT_EMAIL}`,
   });
 }

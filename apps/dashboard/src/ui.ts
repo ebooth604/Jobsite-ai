@@ -157,6 +157,8 @@ export const NAV: NavItem[] = [
   { href: "/capture", label: "Capture" },
   { href: "/bid", label: "Bid alignment" },
   { href: "/data-quality", label: "Data quality" },
+  { href: "/help", label: "Help" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const STYLES = `

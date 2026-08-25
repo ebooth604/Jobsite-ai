@@ -10,6 +10,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bidView } from "./bid-view.js";
 import { captureView } from "./capture-view.js";
+import { contactView, helpView } from "./contact-view.js";
 import { landingView, reportView } from "./landing-view.js";
 import { detectDrift, reconcile } from "./reconcile.js";
 import { type ProjectData, readiness, reportKind } from "./reports.js";
@@ -65,6 +66,8 @@ const ROUTES: Record<string, (m: ViewModel) => string> = {
   "/alerts": alerts,
   "/data-quality": dataQuality,
   "/capture": (m) => captureView(m.project, m.scopeItems),
+  "/contact": () => contactView(),
+  "/help": () => helpView(),
   "/bid": (m) => bidView(m.project, m.hours),
 };
 
@@ -78,7 +81,6 @@ const scriptCache = new Map<string, string>();
 const CLIENT_SCRIPTS: Record<string, string> = {
   "/capture.js": "capture-client.js",
   "/assistant.js": "assistant-client.js",
-  "/admin.js": "admin-client.js",
   "/contact.js": "contact-client.js",
   "/bid.js": "bid-client.js",
 };
