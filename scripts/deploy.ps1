@@ -39,19 +39,26 @@ $env:AWS_REGION            = $Region
 
 # --- apply ------------------------------------------------------------------
 
+# Arguments are quoted and passed as an array, not written inline.
+#
+# Windows PowerShell 5.1 mangles an unquoted native argument of the shape
+# `-var-file=envs\dev.tfvars`, and terraform receives it as two tokens — the
+# second of which it reads as a positional directory, hence "Too many command
+# line arguments. To specify a working directory, use -chdir". Quoting each
+# argument passes it through intact.
 Push-Location $TfDir
 try {
   # A saved plan goes stale once state moves. Re-planning is cheap and removes
   # the "saved plan is no longer valid" failure mode entirely.
   Write-Host '- planning' -ForegroundColor Cyan
-  & $Terraform plan -var-file=envs\dev.tfvars -out=tfplan.bin
+  & $Terraform @('plan', '-var-file=envs\dev.tfvars', '-out=tfplan.bin')
   if ($LASTEXITCODE -ne 0) { Write-Error 'terraform plan failed' }
 
   Write-Host '- applying' -ForegroundColor Cyan
-  & $Terraform apply tfplan.bin
+  & $Terraform @('apply', 'tfplan.bin')
   if ($LASTEXITCODE -ne 0) { Write-Error 'terraform apply failed' }
 
-  $url = & $Terraform output -raw classifier_url
+  $url = & $Terraform @('output', '-raw', 'classifier_url')
 }
 finally {
   Pop-Location
