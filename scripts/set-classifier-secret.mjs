@@ -1,11 +1,15 @@
 /**
  * Loads the classifier's secret values into AWS Secrets Manager.
  *
- * Reads them from `apps/trainer/.env` and pipes the JSON to the AWS CLI over
- * stdin. Both details matter: passing `--secret-string '{"password":"..."}'` on
- * the command line writes the password into shell history and into the argument
- * list of a process any other user on the machine can read, and neither is a
- * good place for the credential that guards unredacted photographs.
+ * Uses the AWS SDK rather than shelling out to the CLI. The CLI route has no
+ * good way to pass a secret on Windows: `--secret-string '{"password":"..."}'`
+ * writes the credential into shell history and into an argv other local users
+ * can read, and the stdin form (`file:///dev/stdin`) is a Unix path that does
+ * not exist here. A temp file would work but leaves the password on disk
+ * unencrypted between write and delete. The SDK keeps it in this process.
+ *
+ * Values come from `apps/trainer/.env` (git-ignored), so the password never has
+ * to be typed into a terminal or a transcript to be used.
  *
  * Terraform creates the empty secret; this fills it. That split is deliberate —
  * Terraform state is a readable file, and a value passed as a resource argument
@@ -14,21 +18,26 @@
  *   node scripts/set-classifier-secret.mjs [--profile sitewire] [--region ca-central-1]
  */
 
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "..");
-const ENV_FILE = join(ROOT, "apps", "trainer", ".env");
+const APP = join(ROOT, "apps", "trainer");
+const ENV_FILE = join(APP, ".env");
+
+// The SDK is a dependency of the trainer, not of this script's directory, so
+// resolution is anchored there rather than relying on hoisting.
+const require = createRequire(join(APP, "package.json"));
+const { SecretsManagerClient, PutSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
 
 function arg(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
   return index >= 0 ? process.argv[index + 1] : fallback;
 }
 
-const profile = arg("profile", "sitewire");
 const region = arg("region", "ca-central-1");
 const secretId = arg("secret-id", "sitewireai-dev-classifier");
 
@@ -62,39 +71,31 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// The handler expects exactly these three keys — see loadSecret() in handler.ts.
-const payload = JSON.stringify({
-  username,
-  password,
-  anthropic_api_key: apiKey,
-});
+// Exactly these three keys — see loadSecret() in apps/trainer/src/handler.ts.
+const payload = JSON.stringify({ username, password, anthropic_api_key: apiKey });
 
 console.log(`• putting secret values into ${secretId} (${region})`);
 
+// Credentials come from the environment, which deploy.ps1 has already bridged.
+const client = new SecretsManagerClient({ region });
+
 try {
-  execFileSync(
-    "aws",
-    [
-      "secretsmanager",
-      "put-secret-value",
-      "--profile", profile,
-      "--region", region,
-      "--secret-id", secretId,
-      // `file:///dev/stdin` is the CLI's read-from-stdin form. The value never
-      // becomes an argv entry.
-      "--secret-string", "file:///dev/stdin",
-      "--output", "json",
-    ],
-    { input: payload, stdio: ["pipe", "pipe", "inherit"], shell: false },
-  );
+  await client.send(new PutSecretValueCommand({ SecretId: secretId, SecretString: payload }));
 } catch (err) {
-  console.error("\nFailed. Has `terraform apply` run yet? The secret must exist first.");
+  const name = err?.name ?? "";
+  if (name === "ResourceNotFoundException") {
+    console.error(`\nSecret ${secretId} does not exist. Has terraform apply run?`);
+  } else if (name === "AccessDeniedException" || name === "UnrecognizedClientException") {
+    console.error("\nCredentials rejected. Run: aws login --profile sitewire");
+  } else {
+    console.error(`\n${name}: ${err?.message ?? String(err)}`);
+  }
   process.exit(1);
 }
 
 console.log("✓ secret set");
 console.log(`  username: ${username}`);
-console.log("  password: (in apps/trainer/.env — not printed here)");
+console.log("  password: (from apps/trainer/.env — not printed)");
 console.log("  anthropic_api_key: (set)");
-console.log("\nThe Lambda caches the secret per execution environment, so a rotation");
+console.log("\nThe Lambda caches the secret per execution environment, so a change");
 console.log("takes effect as environments recycle rather than instantly.");
