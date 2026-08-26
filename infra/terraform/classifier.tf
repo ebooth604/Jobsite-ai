@@ -16,10 +16,11 @@ module "classifier" {
   name_prefix = local.name_prefix
   bundle_path = "${path.module}/../../dist/classifier.zip"
   model       = var.classifier_model
+}
 
-  db_cluster_arn = module.database.cluster_arn
-  db_secret_arn  = module.database.secret_arn
-  db_name        = module.database.database_name
+output "domain_table" {
+  description = "DynamoDB table holding organizations, projects and their rows."
+  value       = module.classifier.domain_table_name
 }
 
 output "classifier_url" {

@@ -1,28 +1,29 @@
 /**
  * Tenant-scoped reads.
  *
- * Every function here takes `orgId` as its **first** parameter and puts it in
- * the WHERE clause of the table being read — not of a table it joins to. That
- * is the single rule this file exists to enforce, and it is worth stating why
- * it is a rule rather than a habit:
+ * Every function takes `orgId` as its **first** parameter, and there is no
+ * unscoped overload to reach for by accident — the unscoped convenience
+ * function is exactly the one that eventually gets called from a path where
+ * the caller's identity was never checked.
  *
- * A query that forgets `org_id` returns another tenant's rows. It does not
- * error, it does not look wrong in review, and in a demo with one customer it
- * behaves identically to a correct one. The failure surfaces the day a second
- * customer logs in, as their competitor's jobsite photographs.
+ * The scoping itself is enforced a layer down: `orgId` becomes the DynamoDB
+ * partition key, so these functions cannot return another tenant's rows even
+ * if the filtering here were wrong. See `client.ts`.
  *
- * So there is no `getProject(id)` here, only `getProject(orgId, id)`. The
- * unscoped convenience overload is the exact function that eventually gets
- * called from a path where the caller's identity was never checked.
+ * The joins that used to be SQL now happen in the app. At this data volume —
+ * a few dozen rows per project — loading a tenant's collections and joining in
+ * memory costs milliseconds, and `reconcile()` already expects arrays.
  */
 
-import { type Param, query } from "./client.js";
+import {
+  getItem,
+  type OrgItem,
+  putOrg,
+  queryOrgs,
+  queryType,
+} from "./client.js";
 
-export interface OrgRow {
-  id: string;
-  name: string;
-  slug: string;
-}
+export type OrgRow = OrgItem;
 
 export interface ProjectRow {
   id: string;
@@ -49,8 +50,8 @@ export interface CaptureRow {
   capturedAt: string;
   capturedBy: string;
   origin: string;
-  imageKey: string | null;
-  classification: unknown;
+  imageKey?: string | null;
+  classification?: unknown;
 }
 
 export interface EstimateRow {
@@ -84,116 +85,70 @@ export interface ConditionRow {
 // ---- organizations ---------------------------------------------------------
 
 export async function listOrgs(): Promise<OrgRow[]> {
-  return query<OrgRow>("SELECT id, name, slug FROM organizations ORDER BY name");
+  const orgs = await queryOrgs();
+  return orgs.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getOrgBySlug(slug: string): Promise<OrgRow | null> {
-  const rows = await query<OrgRow>(
-    "SELECT id, name, slug FROM organizations WHERE slug = :slug",
-    { slug },
-  );
-  return rows[0] ?? null;
+  // The tenant list is small and read once per request at most; a Query on the
+  // shared partition plus a find beats maintaining a second index for it.
+  return (await queryOrgs()).find((o) => o.slug === slug) ?? null;
+}
+
+export async function saveOrg(org: OrgRow): Promise<void> {
+  await putOrg(org);
 }
 
 // ---- projects --------------------------------------------------------------
 
 export async function listProjects(orgId: string): Promise<ProjectRow[]> {
-  return query<ProjectRow>(
-    `SELECT id, name, address, province, data_region AS "dataRegion"
-       FROM projects WHERE org_id = :orgId ORDER BY name`,
-    { orgId },
-  );
+  const rows = await queryType<ProjectRow>(orgId, "PROJECT");
+  return rows.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
  * One project, scoped.
  *
- * Returns null when the id belongs to another tenant, which is what closes the
- * `?project=<id>` hole — the caller renders a 404 and learns nothing about
- * whether the id exists elsewhere.
+ * Null when the id belongs to another tenant — which is what closes the
+ * `?project=<id>` hole. The caller renders a 404 and the requester learns
+ * nothing about whether the id exists elsewhere.
  */
 export async function getProject(orgId: string, projectId: string): Promise<ProjectRow | null> {
-  const rows = await query<ProjectRow>(
-    `SELECT id, name, address, province, data_region AS "dataRegion"
-       FROM projects WHERE org_id = :orgId AND id = :projectId`,
-    { orgId, projectId },
-  );
-  return rows[0] ?? null;
+  return getItem<ProjectRow>(orgId, "PROJECT", projectId);
 }
 
 // ---- rows beneath a project ------------------------------------------------
 //
-// Each takes an optional projectId. Omitted, it returns everything the org owns
-// — which is what the portfolio surfaces want, and is still tenant-safe because
-// org_id is on every one of these tables.
-
-function scoped(orgId: string, projectId?: string): Record<string, Param> {
-  return projectId ? { orgId, projectId } : { orgId };
-}
-
-const byProject = (projectId?: string) => (projectId ? " AND project_id = :projectId" : "");
+// `projectId` is optional: omitted, these return everything the tenant owns,
+// which is what the portfolio surfaces want and is still safe because the
+// partition is the org.
 
 export async function listScopeItems(orgId: string, projectId?: string): Promise<ScopeItemRow[]> {
-  return query<ScopeItemRow>(
-    `SELECT id, project_id AS "projectId", trade, description,
-            unit_of_measure AS "unitOfMeasure", bid_quantity AS "bidQuantity",
-            budgeted_units_per_hour AS "budgetedUnitsPerHour"
-       FROM scope_items WHERE org_id = :orgId${byProject(projectId)} ORDER BY id`,
-    scoped(orgId, projectId),
-  );
+  const rows = await queryType<ScopeItemRow>(orgId, "SCOPE");
+  const scoped = projectId ? rows.filter((r) => r.projectId === projectId) : rows;
+  return scoped.sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export async function listCaptures(orgId: string, projectId?: string): Promise<CaptureRow[]> {
-  const rows = await query<Record<string, unknown>>(
-    `SELECT id, project_id AS "projectId", area, captured_at AS "capturedAt",
-            captured_by AS "capturedBy", origin, image_key AS "imageKey",
-            classification::text AS classification
-       FROM captures WHERE org_id = :orgId${byProject(projectId)} ORDER BY captured_at DESC`,
-    scoped(orgId, projectId),
-  );
-  return rows.map((r) => ({
-    ...r,
-    // jsonb comes back as text; a malformed value must not take the page down.
-    classification: r.classification ? safeJson(String(r.classification)) : null,
-  })) as CaptureRow[];
-}
-
-function safeJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+  const rows = await queryType<CaptureRow>(orgId, "CAPTURE");
+  const scoped = projectId ? rows.filter((r) => r.projectId === projectId) : rows;
+  return scoped.sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
 }
 
 export async function listEstimates(orgId: string): Promise<EstimateRow[]> {
-  return query<EstimateRow>(
-    `SELECT id, capture_id AS "captureId", scope_item_id AS "scopeItemId",
-            estimated_quantity AS "estimatedQuantity", confidence, abstained,
-            model_version AS "modelVersion"
-       FROM quantity_estimates WHERE org_id = :orgId ORDER BY id`,
-    { orgId },
-  );
+  const rows = await queryType<EstimateRow>(orgId, "ESTIMATE");
+  return rows.sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export async function listHours(orgId: string, projectId?: string): Promise<HoursRow[]> {
-  const rows = await query<Record<string, unknown>>(
-    `SELECT id, project_id AS "projectId", scope_item_id AS "scopeItemId", date, hours,
-            source_system AS "sourceSystem", normalization_flags AS "normalizationFlags"
-       FROM labour_hours WHERE org_id = :orgId${byProject(projectId)} ORDER BY date`,
-    scoped(orgId, projectId),
-  );
-  return rows.map((r) => ({
-    ...r,
-    normalizationFlags: Array.isArray(r.normalizationFlags) ? r.normalizationFlags : [],
-  })) as HoursRow[];
+  const rows = await queryType<HoursRow>(orgId, "HOURS");
+  const scoped = projectId ? rows.filter((r) => r.projectId === projectId) : rows;
+  return scoped
+    .map((r) => ({ ...r, normalizationFlags: r.normalizationFlags ?? [] }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function listConditions(orgId: string): Promise<ConditionRow[]> {
-  return query<ConditionRow>(
-    `SELECT id, capture_id AS "captureId", condition_type AS "conditionType",
-            description, confidence
-       FROM conditions WHERE org_id = :orgId ORDER BY id`,
-    { orgId },
-  );
+  const rows = await queryType<ConditionRow>(orgId, "CONDITION");
+  return rows.sort((a, b) => a.id.localeCompare(b.id));
 }

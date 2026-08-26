@@ -13,6 +13,11 @@ output "table_name" {
   value       = aws_dynamodb_table.photos.name
 }
 
+output "domain_table_name" {
+  description = "DynamoDB table holding organizations, projects and their rows."
+  value       = aws_dynamodb_table.domain.name
+}
+
 output "secret_arn" {
   description = "Secret holding the basic-auth pair and the model API key."
   value       = aws_secretsmanager_secret.app.arn

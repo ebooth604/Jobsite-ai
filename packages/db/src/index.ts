@@ -1,12 +1,14 @@
 export {
   databaseConfigured,
-  execute,
-  type Param,
-  query,
-  transaction,
+  deleteItem,
+  type EntityType,
+  getItem,
+  type OrgItem,
+  putItem,
+  putMany,
+  queryType,
 } from "./client.js";
-export { applySchema, seedAll, summarise } from "./migrate.js";
-export { ORG_A, ORG_B, SEED_ORGS, type SeedOrg } from "./seed.js";
+export { seedAll, summarise } from "./migrate.js";
 export {
   type CaptureRow,
   type ConditionRow,
@@ -23,5 +25,7 @@ export {
   listScopeItems,
   type OrgRow,
   type ProjectRow,
+  saveOrg,
   type ScopeItemRow,
 } from "./repo.js";
+export { ORG_A, ORG_B, SEED_ORGS, type SeedOrg } from "./seed.js";

@@ -76,6 +76,39 @@ resource "aws_dynamodb_table" "photos" {
   }
 }
 
+# The tenant-scoped domain table: organizations, projects, scope items,
+# captures, estimates, labour hours and conditions.
+#
+# **The org id is the partition key.** That is the tenancy design, not a
+# convention: every item lives at `pk = "ORG#<orgId>"`, so reading another
+# tenant's row is not a query that has to remember a filter — it is a query
+# against a partition the caller never names. A forgotten `WHERE org_id` in SQL
+# silently returns someone else's data; here the equivalent mistake returns
+# nothing, because the partition key is not optional.
+#
+# The sort key is `"<TYPE>#<id>"`, so one Query with a `begins_with` returns all
+# of a tenant's projects, or all of its captures, in one call.
+resource "aws_dynamodb_table" "domain" {
+  name         = "${var.name_prefix}-domain"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+  range_key    = "sk"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+}
+
 # ---- secrets ----------------------------------------------------------------
 
 # One secret holding three values: the basic-auth pair and the model API key.
@@ -135,6 +168,19 @@ resource "aws_iam_role_policy" "app" {
         Resource = aws_dynamodb_table.photos.arn
       },
       {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:BatchWriteItem",
+          # No Scan. Every read here is partitioned by org, and granting Scan
+          # would hand the function the one verb that can cross tenants.
+        ]
+        Resource = aws_dynamodb_table.domain.arn
+      },
+      {
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue"]
         Resource = aws_secretsmanager_secret.app.arn
@@ -162,13 +208,11 @@ resource "aws_lambda_function" "app" {
 
   environment {
     variables = {
-      SITEWIREAI_TABLE          = aws_dynamodb_table.photos.name
-      SITEWIREAI_BUCKET         = aws_s3_bucket.photos.bucket
-      SITEWIREAI_SECRET_ID      = aws_secretsmanager_secret.app.arn
-      SITEWIREAI_MODEL          = var.model
-      SITEWIREAI_DB_CLUSTER_ARN = var.db_cluster_arn
-      SITEWIREAI_DB_SECRET_ARN  = var.db_secret_arn
-      SITEWIREAI_DB_NAME        = var.db_name
+      SITEWIREAI_TABLE        = aws_dynamodb_table.photos.name
+      SITEWIREAI_DOMAIN_TABLE = aws_dynamodb_table.domain.name
+      SITEWIREAI_BUCKET       = aws_s3_bucket.photos.bucket
+      SITEWIREAI_SECRET_ID    = aws_secretsmanager_secret.app.arn
+      SITEWIREAI_MODEL        = var.model
       # The API key is deliberately NOT here. It lives in the secret, so it is
       # not readable from the function's configuration page.
     }
