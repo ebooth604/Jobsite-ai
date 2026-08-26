@@ -23,12 +23,15 @@ import { z } from "zod";
 import { CONDITION_TYPES, type Classification, SEVERITIES, TRADES } from "./photo.js";
 
 /**
- * Frontier tier on purpose. This is the only model in the system now — it does
- * the work four components used to split between it — and the failure mode that
- * matters is a confident wrong reading reaching a foreman. Override with
- * `SITEWIREAI_MODEL` if you want to trade quality for cost.
+ * Sonnet rather than Opus: this runs over every photo on a site, so per-photo
+ * cost and latency are the constraints that actually bind, and vision
+ * classification into a fixed vocabulary is well within Sonnet's range.
+ *
+ * Set `SITEWIREAI_MODEL=claude-opus-5` to trade cost back for judgement. That is
+ * the knob worth reaching for if readings start looking shallow on hard frames —
+ * poor light, heavy occlusion, several trades in one shot.
  */
-const MODEL = process.env.SITEWIREAI_MODEL ?? "claude-opus-5";
+const MODEL = process.env.SITEWIREAI_MODEL ?? "claude-sonnet-5";
 
 /** The API rejects larger inline images; the caller downscales before sending. */
 const MAX_IMAGE_BYTES = 4_000_000;
