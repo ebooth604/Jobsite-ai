@@ -23,6 +23,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.120.0
         version: 0.120.0(zod@4.4.3)
+      '@aws-sdk/client-s3':
+        specifier: ^3.1118.0
+        version: 3.1118.0
       '@sitewireai/db':
         specifier: workspace:*
         version: link:../../packages/db

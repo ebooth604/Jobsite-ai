@@ -19,6 +19,7 @@ import { ADMIN_PATHS, renderAdmin } from "./admin.js";
 import {
   captureClientScriptFor,
   handleAssist,
+  handleCaptureUpload,
   handleVision,
   renderPath,
   renderStatic,
@@ -92,16 +93,25 @@ const server = createServer((req, res) => {
 
   const rawQuery = (req.url ?? "").split("?")[1] ?? "";
 
-  if ((path === "/ai" || path === "/ai/vision") && req.method === "POST") {
+  const POSTS: Record<string, typeof handleAssist> = {
+    "/ai": handleAssist,
+    "/ai/vision": handleVision,
+    "/api/captures": handleCaptureUpload,
+  };
+
+  const post = POSTS[path];
+  if (post && req.method === "POST") {
     const chunks: Buffer[] = [];
     req.on("data", (c: Buffer) => chunks.push(c));
     req.on("end", () => {
       void (async () => {
         const tenant = await resolveTenant(rawQuery);
-        const run = path === "/ai/vision" ? handleVision : handleAssist;
-        const ai = await run(Buffer.concat(chunks).toString("utf8"), tenant?.orgId ?? null);
-        res.writeHead(ai.status, { "content-type": ai.contentType, "cache-control": "no-store" });
-        res.end(ai.body);
+        const result = await post(Buffer.concat(chunks).toString("utf8"), tenant?.orgId ?? null);
+        res.writeHead(result.status, {
+          "content-type": result.contentType,
+          "cache-control": "no-store",
+        });
+        res.end(result.body);
       })();
     });
     return;

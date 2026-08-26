@@ -8,7 +8,14 @@
  * architecture.
  */
 
-import { handleAssist, handleVision, renderPath, renderStatic, renderWithQuery } from "./app.js";
+import {
+  handleAssist,
+  handleCaptureUpload,
+  handleVision,
+  renderPath,
+  renderStatic,
+  renderWithQuery,
+} from "./app.js";
 import { resolveTenant } from "./tenant.js";
 
 interface FunctionUrlEvent {
@@ -99,12 +106,18 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
   const tenant = await resolveTenant(event.rawQueryString ?? "");
   const orgId = tenant?.orgId ?? null;
 
-  if ((path === "/ai" || path === "/ai/vision") && event.requestContext?.http?.method === "POST") {
+  const POSTS: Record<string, typeof handleAssist> = {
+    "/ai": handleAssist,
+    "/ai/vision": handleVision,
+    "/api/captures": handleCaptureUpload,
+  };
+
+  const post = POSTS[path];
+  if (post && event.requestContext?.http?.method === "POST") {
     const raw = event.isBase64Encoded
       ? Buffer.from(event.body ?? "", "base64").toString("utf8")
       : (event.body ?? "");
-    const ai =
-      path === "/ai/vision" ? await handleVision(raw, orgId) : await handleAssist(raw, orgId);
+    const ai = await post(raw, orgId);
     return {
       statusCode: ai.status,
       headers: {

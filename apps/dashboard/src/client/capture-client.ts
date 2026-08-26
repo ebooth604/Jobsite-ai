@@ -422,6 +422,9 @@ async function queueActive(): Promise<void> {
 
   queue.push(entry);
 
+  // Local first, deliberately. A jobsite has poor signal, and losing a capture
+  // because an upload failed is worse than storing it twice — the local copy is
+  // the offline path, not a duplicate to be tidied away.
   try {
     await dbPut(entry);
     storageError = null;
@@ -432,6 +435,76 @@ async function queueActive(): Promise<void> {
   }
 
   renderQueue();
+  void uploadEntry(entry);
+}
+
+/**
+ * Sends one prepared capture to the server.
+ *
+ * A failure is reported on the card and the local copy is kept, so a capture is
+ * never lost to a bad connection. State is keyed by capture id rather than held
+ * on the entry itself because the entry is what IndexedDB round-trips, and
+ * upload status is not worth persisting across a reload.
+ */
+const uploadState = new Map<string, string>();
+
+async function uploadEntry(entry: QueuedCapture): Promise<void> {
+  uploadState.set(entry.captureId, "sending");
+  renderQueue();
+
+  try {
+    const body = JSON.stringify({
+      image: await blobToBase64(entry.blob),
+      scopeItemId: entry.scopeItemId,
+      area: entry.area,
+      capturedAt: entry.capturedAt,
+      origin: entry.proposedOrigin,
+      estimatedQuantity: entry.estimatedQuantity,
+      abstained: entry.abstained,
+    });
+
+    // The query string carries the dev org switcher; without it an upload would
+    // land in the default tenant while the page shows another one.
+    const res = await fetch(`/api/captures${window.location.search}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+    const payload = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+
+    uploadState.set(
+      entry.captureId,
+      payload.ok ? "stored" : (payload.error ?? `upload failed (${res.status})`),
+    );
+  } catch (err) {
+    uploadState.set(entry.captureId, err instanceof Error ? err.message : String(err));
+  }
+
+  renderQueue();
+}
+
+/** Per-card upload state. Escaped, because a server error message renders here. */
+function uploadChip(captureId: string): string {
+  const state = uploadState.get(captureId);
+  if (state === undefined) return "";
+  if (state === "sending") return '<span class="chip">uploading…</span>';
+  if (state === "stored") return '<span class="chip">stored</span>';
+
+  const safe = state.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
+  );
+  return `<span class="chip" style="color:var(--critical);border-color:var(--critical)">not uploaded: ${safe}</span>`;
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("could not read the redacted image"));
+    reader.onload = () => resolve(String(reader.result ?? "").replace(/^data:[^,]+,/, ""));
+    reader.readAsDataURL(blob);
+  });
 }
 
 async function loadSaved(): Promise<void> {
@@ -484,9 +557,16 @@ function renderQueue(): void {
     note.className = "gate todo";
     note.textContent = `Not saved to this device — ${storageError}. Captures will be lost on refresh.`;
   } else if (queue.length > 0) {
-    note.className = "gate ok";
+    const failed = queue.filter((q) => {
+      const state = uploadState.get(q.captureId);
+      return state !== undefined && state !== "sending" && state !== "stored";
+    }).length;
+
+    note.className = failed > 0 ? "gate todo" : "gate ok";
     note.textContent =
-      "Saved on this device only, and only the redacted image. Nothing was uploaded. Use Clear all before handing this laptop on.";
+      failed > 0
+        ? `${failed} capture(s) did not upload. They are kept on this device — see the cards below.`
+        : "Uploaded, and kept on this device as a local copy. Only the redacted image is ever sent or stored. Use Clear all before handing this laptop on.";
   } else {
     note.className = "muted";
     note.textContent = "";
@@ -525,7 +605,9 @@ function renderQueue(): void {
       `<div class="muted">${entry.area} · ${entry.capturedAt}</div>`,
       `<div>Quantity: ${quantity}</div>`,
       `<div><span class="chip">origin proposed: ${entry.proposedOrigin}</span>`,
-      `<span class="chip">face_blur_status: ${entry.faceBlurStatus}</span></div>`,
+      `<span class="chip">face_blur_status: ${entry.faceBlurStatus}</span>`,
+      uploadChip(entry.captureId),
+      "</div>",
     ].join("");
 
     const actions = document.createElement("div");

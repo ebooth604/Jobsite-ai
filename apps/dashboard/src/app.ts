@@ -409,6 +409,42 @@ export async function handleVision(rawBody: string, orgId: string | null): Promi
   }
 }
 
+/**
+ * Stores one capture: bytes to S3, a row to the tenant's partition.
+ *
+ * Returns the same JSON shape on success and failure — `{ ok, ... }` versus
+ * `{ ok: false, error }` — so the client can branch on one field rather than on
+ * a status code it may not check.
+ */
+export async function handleCaptureUpload(
+  rawBody: string,
+  orgId: string | null,
+): Promise<RenderResult> {
+  const json = "application/json; charset=utf-8";
+  const fail = (status: number, error: string): RenderResult => ({
+    status,
+    contentType: json,
+    body: JSON.stringify({ ok: false, error }),
+  });
+
+  try {
+    if (!orgId) return fail(401, "No organization for this request.");
+
+    const { parseUpload, saveCapture } = await import("./captures.js");
+    const upload = parseUpload(rawBody);
+    if ("error" in upload) return fail(400, upload.error);
+
+    const scopeItems = (await db.listScopeItems(orgId)).map(toScopeItem);
+    const result = await saveCapture(orgId, upload, scopeItems);
+    if ("error" in result) return fail(422, result.error);
+
+    return { status: 201, contentType: json, body: JSON.stringify({ ok: true, ...result }) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return fail(502, `Could not store that capture — ${message}`);
+  }
+}
+
 /** Reads one compiled browser bundle by file name. Used by the admin mount. */
 export function captureClientScriptFor(file: string): string {
   return clientScript(file);
