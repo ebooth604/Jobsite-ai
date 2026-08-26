@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --build",
-    "serve": "tsc --build && node dist/server.js"
+    "serve": "tsc --build && node --env-file-if-exists=.env dist/server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
