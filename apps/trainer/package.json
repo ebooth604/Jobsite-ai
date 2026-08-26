@@ -8,11 +8,10 @@
     "serve": "tsc --build && node dist/server.js"
   },
   "dependencies": {
-    "@sitewireai/shared-types": "workspace:*"
+    "@anthropic-ai/sdk": "^0.120.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1116.0",
-    "@aws-sdk/client-s3": "^3.1117.0",
     "@types/node": "^26.2.0"
   }
 }

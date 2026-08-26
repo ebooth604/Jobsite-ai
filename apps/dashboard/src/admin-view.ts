@@ -104,16 +104,22 @@ export function adminView(): string {
 </div>
 
 <fieldset>
-  <legend>Training data</legend>
+  <legend>Photo classification</legend>
   <p class="hint" style="margin:0 0 12px">
-    Upload jobsite photos, redact faces, and label ground truth for the quantity
-    and reasoning models. It runs as its own local app — start it with
-    <code>pnpm --filter @sitewireai/trainer serve</code> — and is not part of
-    the deployed site, same as this page.
+    Upload jobsite photos and have a frontier model classify them — trade, scope,
+    conditions and a recommendation. It runs as its own local app — start it with
+    <code>pnpm --filter @sitewireai/trainer serve</code> — and is not part of the
+    deployed site, same as this page.
+  </p>
+  <p class="hint" style="margin:0 0 12px; color: var(--critical)">
+    <strong>Does not follow the residency or face-blur rules described below.</strong>
+    Photos are stored on the local disk exactly as uploaded, with no redaction, and
+    classification sends them to the Anthropic API outside Canada. Do not put
+    customer photographs through it under a contract that promises either.
   </p>
   <div class="actions">
     <a class="button-link" href="http://localhost:4180" target="_blank" rel="noopener">
-      Open training →
+      Open classification →
     </a>
   </div>
 </fieldset>

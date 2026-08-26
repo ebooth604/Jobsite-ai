@@ -29,12 +29,7 @@ export const jsonBlock = (value: unknown): string => JSON.stringify(value).repla
 
 const NAV: readonly { href: string; label: string }[] = [
   { href: "/", label: "Library" },
-  { href: "/intake", label: "Intake" },
-  { href: "/assist", label: "Assist" },
-  { href: "/review", label: "Review queue" },
-  { href: "/coverage", label: "Coverage" },
-  { href: "/export", label: "Export" },
-  { href: "/integrity", label: "Integrity" },
+  { href: "/upload", label: "Upload" },
 ];
 
 const STYLES = `
@@ -156,6 +151,36 @@ const STYLES = `
 
   .empty { color: var(--muted); background: var(--panel); border: 1px dashed var(--line);
     border-radius: 8px; padding: 22px; text-align: center; }
+
+  .card-title { display: block; font-size: 14px; margin-bottom: 2px; font-weight: 600;
+    color: var(--ink); text-decoration: none; }
+  .card-title:hover { color: var(--accent); }
+
+  .work { display: grid; gap: 16px; grid-template-columns: 1fr 420px; align-items: start; }
+  @media (max-width: 1040px) { .work { grid-template-columns: 1fr; } }
+  .stagewrap { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; position: sticky; top: 12px; }
+  img.stage { max-width: 100%; border-radius: 6px; display: block; }
+
+  .savebar { position: sticky; bottom: 0; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; margin-top: 14px; display: flex; gap: 10px;
+    align-items: center; flex-wrap: wrap; }
+
+  #drop { border: 1px dashed var(--line); border-radius: 10px; background: var(--panel);
+    padding: 26px; text-align: center; color: var(--muted); }
+  #drop.over { border-color: var(--accent); color: var(--ink); }
+  #drop input { display: none; }
+  .filebtn { display: inline-block; margin-top: 10px; padding: 8px 14px;
+    border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--ink);
+    background: var(--bg); font-size: 14px; }
+  .filebtn:hover { border-color: var(--accent); }
+  #thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+  .thumb { position: relative; border: 2px solid var(--line); border-radius: 6px;
+    background: var(--panel); line-height: 0; }
+  .thumb img { max-width: 84px; max-height: 84px; border-radius: 4px; }
+  .thumb-remove { position: absolute; right: -6px; top: -6px; width: 18px; height: 18px;
+    border-radius: 999px; border: 0; background: var(--critical); color: #fff; font-size: 12px;
+    line-height: 18px; padding: 0; cursor: pointer; }
 `;
 
 export interface PageOptions {
@@ -164,7 +189,7 @@ export interface PageOptions {
   heading: string;
   lede: string;
   storePath: string;
-  sampleCount: number;
+  photoCount: number;
   body: string;
 }
 
@@ -185,10 +210,10 @@ export function page(opts: PageOptions): string {
 <body>
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">SiteWireAi<span>training corpus</span></div>
+    <div class="brand">SiteWireAi<span>photo classification</span></div>
     <div style="margin-left:auto">
-      <span class="badge">${opts.sampleCount} samples</span>
-      <span class="badge path" title="Every photo and label lives here">${escapeHtml(opts.storePath)}</span>
+      <span class="badge">${opts.photoCount} photos</span>
+      <span class="badge path" title="Every photo lives here">${escapeHtml(opts.storePath)}</span>
     </div>
   </div>
   <nav>${navLinks}</nav>
@@ -199,8 +224,8 @@ export function page(opts: PageOptions): string {
   <p class="lede">${escapeHtml(opts.lede)}</p>
   ${opts.body}
   <footer>
-    Local tool · runs on 127.0.0.1 · photos are redacted in the browser before they
-    reach disk · nothing here is uploaded anywhere
+    Local tool · runs on 127.0.0.1 · photos are stored as uploaded, with no redaction ·
+    classification sends them to the model API
   </footer>
 </div>
 </body>

@@ -21,17 +21,6 @@ output "common_tags" {
   value       = local.common_tags
 }
 
-output "corpus_bucket" {
-  description = "Training corpus bucket name."
-  value       = module.corpus_bucket.bucket_name
-}
-
-output "corpus_store_uri" {
-  description = "Set SITEWIREAI_TRAINER_STORE to this to point the trainer at the cloud corpus."
-  value       = module.corpus_bucket.store_uri
-}
-
-output "corpus_access_policy_arn" {
-  description = "Managed policy granting access to the corpus. Attach it deliberately."
-  value       = module.corpus_bucket.access_policy_arn
-}
+# The corpus bucket outputs were removed along with the training corpus itself.
+# Photos now live in a local directory and classification calls a hosted model,
+# so there is no shared S3 store for anything to point at.
