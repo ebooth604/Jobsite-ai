@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trainer",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "@sitewireai/trainer", "serve"],
+      "port": 4180
+    },
+    {
+      "name": "prelabel",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "--directory", "services/prelabel", "prelabel-server"],
+      "port": 4181
+    }
+  ]
+}

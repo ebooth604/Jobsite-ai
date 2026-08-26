@@ -62,3 +62,17 @@ override.tf.json
 terraform.rc
 # tfvars may carry account-specific values; envs/*.tfvars are deliberate and tracked.
 *.auto.tfvars
+
+# Training corpus — real jobsite photographs and one customer's quantities.
+# Never in git. Back it up out of band; see apps/trainer/README.md.
+apps/trainer/data/
+
+# Model weights and converted training data for the local prelabel assist.
+# Weights are downloaded, datasets are third-party — neither belongs in git.
+services/prelabel/.venv/
+services/prelabel/runs/
+services/prelabel/data/
+*.pt
+
+# Ultralytics writes run output relative to its own cwd, which lands here.
+runs/

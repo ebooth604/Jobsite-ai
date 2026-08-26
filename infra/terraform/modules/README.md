@@ -1,12 +1,17 @@
 # infra/terraform/modules
 
-Empty by design.
+One module so far.
+
+| Module | What it is |
+|---|---|
+| `corpus-bucket/` | Private, encrypted, versioned S3 for the training corpus — redacted jobsite media and the ground truth measured from it |
 
 Modules land here when a piece of the footprint is real enough to have a boundary —
-not before. The service boundaries in [`services/`](../../../services/README.md) are
-a starting hypothesis for what those modules will be (network, media storage, an
-ECS/Fargate service wrapper, Cognito), but writing them now would encode a guess
-about the seam rather than an observation of it.
+not before. `corpus-bucket` qualified because there is a tool writing real
+photographs to it today ([`apps/trainer`](../../../apps/trainer/README.md)). The
+remaining service boundaries in [`services/`](../../../services/README.md) are still
+a hypothesis (network, an ECS/Fargate service wrapper, Cognito), and writing them
+now would encode a guess about the seam rather than an observation of it.
 
 ## What binds any module added here
 

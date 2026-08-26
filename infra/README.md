@@ -36,5 +36,12 @@ first resource: S3 remote state with per-environment backends, a `bootstrap/` ro
 that creates the state bucket and lock table, shared naming and tagging, and a CI job
 that format-checks, validates, and tests the region guard.
 
-No compute, storage, or networking yet — those wait on the technical spike and on
-confirmation of ADR-0001. Nothing here has been applied; reversal is still near zero.
+One storage resource is defined: the **training corpus bucket** that
+[`apps/trainer`](../apps/trainer/README.md) writes redacted jobsite photographs and
+ground-truth measurements into. It carries the §8 items as configuration —
+encryption at rest, versioning, a full public-access block, and a policy denying
+any request without TLS.
+
+No compute and no networking yet; those wait on the technical spike. Nothing here
+has been applied, so reversal is still near zero — the corpus bucket is the resource
+that ends that, deliberately.

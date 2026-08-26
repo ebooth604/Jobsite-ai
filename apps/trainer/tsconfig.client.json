@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src/client",
+    "outDir": "dist/client",
+    // Browser code: DOM instead of node, same split the dashboard uses so a
+    // server file cannot reach for `document` and still typecheck.
+    "lib": ["ES2023", "DOM"],
+    "types": [],
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": ["src/client/**/*.ts"]
+}

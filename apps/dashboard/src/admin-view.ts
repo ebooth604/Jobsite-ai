@@ -36,7 +36,7 @@ const ADMIN_STYLES = `
     color: var(--ink); background: var(--bg); border: 1px solid var(--line);
     border-radius: 6px; width: 100%; }
   .f textarea { min-height: 64px; resize: vertical; }
-  .f .hint { font-size: 12px; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); }
   .f.bad input, .f.bad select { border-color: var(--critical); }
   .f .err { font-size: 12px; color: var(--critical); }
   .checks { display: grid; gap: 8px;
@@ -47,6 +47,9 @@ const ADMIN_STYLES = `
     font-weight: 600; cursor: pointer; border: 1px solid var(--accent);
     background: var(--accent); color: #fff; }
   .actions button.secondary { background: transparent; color: var(--accent); }
+  .actions a.button-link { display: inline-block; padding: 10px 16px; border-radius: 6px;
+    font: inherit; font-weight: 600; text-decoration: none; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; }
   #admin-out { margin-top: 16px; }
   #admin-out pre { background: var(--panel); border: 1px solid var(--line);
     border-radius: 8px; padding: 14px; overflow-x: auto; font-size: 12px; }
@@ -99,6 +102,21 @@ export function adminView(): string {
   server and is not reachable on the deployed site. It has no authentication yet,
   so do not run this server on a shared network with real customer data in it.
 </div>
+
+<fieldset>
+  <legend>Training data</legend>
+  <p class="hint" style="margin:0 0 12px">
+    Upload jobsite photos, redact faces, and label ground truth for the quantity
+    and reasoning models. It runs as its own local app — start it with
+    <code>pnpm --filter @sitewireai/trainer serve</code> — and is not part of
+    the deployed site, same as this page.
+  </p>
+  <div class="actions">
+    <a class="button-link" href="http://localhost:4180" target="_blank" rel="noopener">
+      Open training →
+    </a>
+  </div>
+</fieldset>
 
 <form id="onboard" novalidate>
 

@@ -48,13 +48,44 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+/**
+ * HSTS — sent because the site is *unreachable* over HTTP, not merely because
+ * HTTP is discouraged.
+ *
+ * API Gateway custom domains listen on 443 only. There is no port 80 listener to
+ * redirect from, so `http://sitewireai.com` does not return a 301, it returns
+ * `connection refused`. On a phone, where typing a bare domain still tries HTTP
+ * first, that is indistinguishable from a domain that does not resolve — which is
+ * exactly how this surfaced.
+ *
+ * This header cannot fix a first visit, and nothing served over HTTPS can: the
+ * browser never reaches us to be told. What it fixes is every visit after the
+ * first — once seen, the browser rewrites `http://` to `https://` itself and never
+ * attempts the refused port again. First-time and shared-link traffic needs
+ * something actually listening on 80, which means CloudFront in front of the API.
+ *
+ * Two deliberate omissions:
+ *
+ * `preload` is **not** here. Preloading bakes the domain into browsers' shipped
+ * source and removal takes months to propagate. That is a decision to make on
+ * purpose for a domain whose setup has settled, not a flag added in passing.
+ *
+ * A one-year max-age is safe here *specifically* because HTTP is impossible on
+ * this domain rather than just unused — there is no later configuration that would
+ * want plain HTTP and find itself locked out.
+ *
+ * `includeSubDomains` commits every future subdomain to HTTPS as well. Anything
+ * served from AWS will be; an HTTP-only subdomain would need this narrowed first.
+ */
+const HSTS = "max-age=31536000; includeSubDomains";
+
 export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResult> => {
   const path = event.rawPath ?? "/";
 
   if (path === "/healthz") {
     return {
       statusCode: 200,
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "strict-transport-security": HSTS },
       body: JSON.stringify({ status: "ok" }),
     };
   }
@@ -69,6 +100,7 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
       headers: {
         "content-type": ai.contentType,
         "cache-control": "no-store",
+        "strict-transport-security": HSTS,
         "content-security-policy": CSP,
         "x-content-type-options": "nosniff",
       },
@@ -88,6 +120,7 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
         // Static demo imagery is immutable in practice and worth caching, unlike
         // every page here, which is regenerated per request.
         "cache-control": "public, max-age=3600",
+        "strict-transport-security": HSTS,
         "x-content-type-options": "nosniff",
       },
       body: asset.body.toString("base64"),
@@ -104,6 +137,7 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
     headers: {
       "content-type": contentType,
       "cache-control": "no-store",
+      "strict-transport-security": HSTS,
       "content-security-policy": CSP,
       "x-content-type-options": "nosniff",
       "referrer-policy": "no-referrer",

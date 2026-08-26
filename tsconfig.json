@@ -6,6 +6,9 @@
     },
     {
       "path": "apps/dashboard"
+    },
+    {
+      "path": "apps/trainer"
     }
   ]
 }
