@@ -121,8 +121,7 @@ function build(): OnboardingRecord {
     compliance: {
       workerNoticeIssued: checked("workerNotice"),
       privacyReviewComplete: checked("privacyReview"),
-      residencyConfirmed: checked("residencyConfirmed"),
-      faceBlurExplained: checked("faceBlurExplained"),
+      offshoreProcessingDisclosed: checked("offshoreProcessing"),
     },
     notes: val("notes"),
   };

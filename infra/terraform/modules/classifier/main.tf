@@ -162,10 +162,13 @@ resource "aws_lambda_function" "app" {
 
   environment {
     variables = {
-      SITEWIREAI_TABLE     = aws_dynamodb_table.photos.name
-      SITEWIREAI_BUCKET    = aws_s3_bucket.photos.bucket
-      SITEWIREAI_SECRET_ID = aws_secretsmanager_secret.app.arn
-      SITEWIREAI_MODEL     = var.model
+      SITEWIREAI_TABLE          = aws_dynamodb_table.photos.name
+      SITEWIREAI_BUCKET         = aws_s3_bucket.photos.bucket
+      SITEWIREAI_SECRET_ID      = aws_secretsmanager_secret.app.arn
+      SITEWIREAI_MODEL          = var.model
+      SITEWIREAI_DB_CLUSTER_ARN = var.db_cluster_arn
+      SITEWIREAI_DB_SECRET_ARN  = var.db_secret_arn
+      SITEWIREAI_DB_NAME        = var.db_name
       # The API key is deliberately NOT here. It lives in the secret, so it is
       # not readable from the function's configuration page.
     }

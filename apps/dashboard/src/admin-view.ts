@@ -187,8 +187,7 @@ export function adminView(): string {
     <div class="checks">
       <label><input type="checkbox" id="workerNotice"> Worker privacy notice issued for this project</label>
       <label><input type="checkbox" id="privacyReview"> PIPA (BC) / PIPEDA review completed</label>
-      <label><input type="checkbox" id="residencyConfirmed"> Canadian data residency confirmed in contract</label>
-      <label><input type="checkbox" id="faceBlurExplained"> Face-blur-at-ingest explained to customer</label>
+      <label><input type="checkbox" id="offshoreProcessing"> Customer told photo analysis happens outside Canada</label>
     </div>
     <p class="hint" style="margin:12px 0 0">
       No individual-worker data is collected at onboarding or anywhere else. There is

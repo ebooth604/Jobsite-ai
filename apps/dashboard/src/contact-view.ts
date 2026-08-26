@@ -108,10 +108,10 @@ ${mailNote}
     </p>
     <h2 style="margin-top:22px">Data &amp; privacy</h2>
     <p class="muted" style="font-size:14px">
-      All media and derived data is held in a Canadian region
-      (<code>ca-central-1</code>). Faces are blurred at ingest and unblurred
-      originals are never stored. There is no individual-worker productivity view
-      anywhere in the product.
+      Media and derived data are stored in a Canadian region
+      (<code>ca-central-1</code>); photo analysis is performed by a third-party
+      model provider outside Canada. There is no individual-worker productivity
+      view anywhere in the product.
     </p>
   </div>
 </div>
@@ -169,13 +169,15 @@ export function helpView(): string {
         as a working draft. SiteWireAi does not file anything on your behalf.</dd>
 
       <dt>What happens to faces in photos?</dt>
-      <dd>They are redacted before anything is stored — on device, and re-checked
-        server-side at ingest. Two independent passes.</dd>
+      <dd>The capture console lets you mosaic faces on device before a photo is
+        stored or sent anywhere, and the redaction is baked into the pixels
+        rather than layered over them. It is a tool you apply, not an automatic
+        guarantee.</dd>
 
       <dt>Does the AI set quantities?</dt>
       <dd>No. It can fill in the area, scope item and date for you to review, and
-        describe what is visible in a photo. It cannot set an estimated quantity,
-        an abstention, or a face-blur declaration.</dd>
+        describe what is visible in a photo. It cannot set an estimated quantity
+        or an abstention.</dd>
     </dl>
   </div>
 

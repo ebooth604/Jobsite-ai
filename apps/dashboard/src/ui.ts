@@ -362,7 +362,6 @@ export function page(opts: PageOptions): string {
     <div class="brand">SiteWireAi<span>${escapeHtml(opts.projectName)}</span></div>
     <div>
       <span class="badge">Data region ${escapeHtml(opts.dataRegion)}</span>
-      <span class="badge">Faces blurred at ingest</span>
     </div>
   </div>
   <nav>${navLinks}</nav>
@@ -388,8 +387,8 @@ export function page(opts: PageOptions): string {
 <button type="button" id="ai-toggle" aria-expanded="false">Ask SiteWireAi</button>
 <div id="ai-panel" hidden>
   <div class="ai-head">
-    Assistant · fills forms and explains numbers. It never sets a quantity,
-    an abstention, or a face-blur declaration — those stay yours.
+    Assistant · fills forms and explains numbers. It never sets a quantity
+    or an abstention — those stay yours.
   </div>
   <div id="ai-log"></div>
   <div class="ai-row">

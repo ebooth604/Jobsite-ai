@@ -8,5 +8,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    # Generates the database master password. It is written to Secrets Manager
+    # and never printed; see modules/database.
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 }

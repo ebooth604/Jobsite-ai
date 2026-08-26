@@ -27,3 +27,8 @@ output "function_name" {
   description = "Lambda function name, for update-function-code and logs."
   value       = aws_lambda_function.app.function_name
 }
+
+output "role_name" {
+  description = "Execution role name, so callers can attach further grants to it."
+  value       = aws_iam_role.lambda.name
+}
