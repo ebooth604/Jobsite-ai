@@ -76,3 +76,5 @@ services/prelabel/data/
 
 # Ultralytics writes run output relative to its own cwd, which lands here.
 runs/
+dist/
+infra/terraform/tfplan.bin

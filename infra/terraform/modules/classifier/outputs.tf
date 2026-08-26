@@ -1,0 +1,29 @@
+output "url" {
+  description = "Base URL of the classifier. Behind HTTP Basic."
+  value       = aws_apigatewayv2_stage.app.invoke_url
+}
+
+output "bucket_name" {
+  description = "Bucket holding the photographs. Private; no public access."
+  value       = aws_s3_bucket.photos.bucket
+}
+
+output "table_name" {
+  description = "DynamoDB table holding photo records and their classifications."
+  value       = aws_dynamodb_table.photos.name
+}
+
+output "secret_arn" {
+  description = "Secret holding the basic-auth pair and the model API key."
+  value       = aws_secretsmanager_secret.app.arn
+}
+
+output "secret_name" {
+  description = "Secret name, for the aws secretsmanager put-secret-value call."
+  value       = aws_secretsmanager_secret.app.name
+}
+
+output "function_name" {
+  description = "Lambda function name, for update-function-code and logs."
+  value       = aws_lambda_function.app.function_name
+}

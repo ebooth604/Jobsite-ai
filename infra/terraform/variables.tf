@@ -18,3 +18,9 @@ variable "environment" {
     error_message = "environment must be one of: dev, staging, prod."
   }
 }
+
+variable "classifier_model" {
+  description = "Claude model id used to classify photographs."
+  type        = string
+  default     = "claude-sonnet-5"
+}

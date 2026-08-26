@@ -11,6 +11,14 @@ import { classifierAvailable, modelName } from "./classify.js";
 import { conditionLabel, type Photo, tradeLabel } from "./photo.js";
 import { escapeHtml, page, statTiles } from "./ui.js";
 
+/**
+ * A photo plus the URL its image is fetched from.
+ *
+ * Resolved by the caller rather than looked up here, because on AWS that URL is a
+ * presigned S3 link — an async call that must not happen inside a render loop.
+ */
+export type Displayable = Photo & { url: string };
+
 function severityClass(severity: string): string {
   return severity === "critical" ? "critical" : severity === "warning" ? "warning" : "";
 }
@@ -39,7 +47,7 @@ function keyWarning(): string {
 }
 
 export function libraryView(
-  photos: readonly Photo[],
+  photos: readonly Displayable[],
   storePath: string,
   result: ClassifyAllResult | null,
 ): string {
@@ -97,7 +105,7 @@ export function libraryView(
       return `
 <div class="card">
   <a href="/photo/${escapeHtml(photo.id)}">
-    <img src="/images/${escapeHtml(photo.imageFile)}" alt="" loading="lazy">
+    <img src="${escapeHtml(photo.url)}" alt="" loading="lazy">
   </a>
   <div class="card-body">
     <a href="/photo/${escapeHtml(photo.id)}" class="card-title">${escapeHtml(
@@ -135,7 +143,7 @@ ${
   });
 }
 
-export function photoView(photo: Photo, storePath: string, photoCount: number): string {
+export function photoView(photo: Displayable, storePath: string, photoCount: number): string {
   const c = photo.classification;
 
   const conditionRows =
@@ -201,7 +209,7 @@ ${keyWarning()}
 
 <div class="work">
   <div class="stagewrap">
-    <img src="/images/${escapeHtml(photo.imageFile)}" alt="" class="stage">
+    <img src="${escapeHtml(photo.url)}" alt="" class="stage">
     <p class="field-hint">
       ${escapeHtml(photo.projectRef || "No project")} · ${escapeHtml(photo.area || "no area")}
       ${photo.capturedAt ? ` · captured ${escapeHtml(photo.capturedAt)}` : ""}
