@@ -12,7 +12,8 @@
     "@anthropic-ai/sdk": "^0.120.0",
     "@aws-sdk/client-s3": "^3.1118.0",
     "@sitewireai/db": "workspace:*",
-    "@sitewireai/shared-types": "workspace:*"
+    "@sitewireai/shared-types": "workspace:*",
+    "aws-jwt-verify": "^5.2.1"
   },
   "devDependencies": {
     "@types/node": "^26.2.0"

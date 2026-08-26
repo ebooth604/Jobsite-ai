@@ -16,6 +16,7 @@ import {
   renderStatic,
   renderWithQuery,
 } from "./app.js";
+import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
 import { resolveTenant } from "./tenant.js";
 
 interface FunctionUrlEvent {
@@ -23,9 +24,9 @@ interface FunctionUrlEvent {
   rawQueryString?: string;
   body?: string;
   isBase64Encoded?: boolean;
-  // Declared for the milestone that reads an Authorization header here. Today
-  // nothing does, and every request resolves to the default tenant.
   headers?: Record<string, string | undefined>;
+  /** API Gateway v2 delivers request cookies here, not in `headers.cookie`. */
+  cookies?: string[];
   requestContext?: { http?: { method?: string } };
 }
 
@@ -34,6 +35,8 @@ interface FunctionUrlResult {
   headers: Record<string, string>;
   body: string;
   isBase64Encoded?: boolean;
+  /** Response cookies. A `set-cookie` header would carry only the first one. */
+  cookies?: string[];
 }
 
 /**
@@ -101,9 +104,36 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
     };
   }
 
+  const rawQuery = event.rawQueryString ?? "";
+  const cookieHeader = (event.cookies ?? []).join("; ") || (event.headers?.cookie ?? "");
+  const host = event.headers?.host ?? "";
+  const proto = event.headers?.["x-forwarded-proto"] ?? "https";
+
+  if (path === "/login" || path === "/auth/callback" || path === "/logout") {
+    const result =
+      path === "/login"
+        ? beginLogin(host, proto)
+        : path === "/logout"
+          ? beginLogout(host, proto)
+          : await completeLogin(host, proto, rawQuery, cookieHeader);
+
+    // API Gateway v2 carries Set-Cookie in its own field, not in `headers` —
+    // multiple cookies in a single header string are silently dropped.
+    const raw = result.headers["set-cookie"];
+    const cookies = raw === undefined ? [] : Array.isArray(raw) ? raw : [raw];
+    const { "set-cookie": _omit, ...rest } = result.headers;
+
+    return {
+      statusCode: result.status,
+      headers: { ...(rest as Record<string, string>), "strict-transport-security": HSTS },
+      ...(cookies.length > 0 ? { cookies } : {}),
+      body: result.body,
+    };
+  }
+
   // One identity resolution per request, threaded down. Nothing below re-derives
   // a tenant from the URL.
-  const tenant = await resolveTenant(event.rawQueryString ?? "");
+  const tenant = await resolveTenant({ rawQuery, cookieHeader });
   const orgId = tenant?.orgId ?? null;
 
   const POSTS: Record<string, typeof handleAssist> = {

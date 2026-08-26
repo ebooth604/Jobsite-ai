@@ -25,6 +25,7 @@ import {
   renderStatic,
   renderWithQuery,
 } from "./app.js";
+import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
 import { resolveTenant } from "./tenant.js";
 
 type Mode = "dev" | "rc";
@@ -92,6 +93,23 @@ const server = createServer((req, res) => {
   }
 
   const rawQuery = (req.url ?? "").split("?")[1] ?? "";
+  const cookieHeader = req.headers.cookie ?? "";
+  const host = req.headers.host ?? `${HOST}:${PORT}`;
+  const proto = String(req.headers["x-forwarded-proto"] ?? "http");
+
+  if (path === "/login" || path === "/auth/callback" || path === "/logout") {
+    void (async () => {
+      const result =
+        path === "/login"
+          ? beginLogin(host, proto)
+          : path === "/logout"
+            ? beginLogout(host, proto)
+            : await completeLogin(host, proto, rawQuery, cookieHeader);
+      res.writeHead(result.status, result.headers);
+      res.end(result.body);
+    })();
+    return;
+  }
 
   const POSTS: Record<string, typeof handleAssist> = {
     "/ai": handleAssist,
@@ -105,7 +123,7 @@ const server = createServer((req, res) => {
     req.on("data", (c: Buffer) => chunks.push(c));
     req.on("end", () => {
       void (async () => {
-        const tenant = await resolveTenant(rawQuery);
+        const tenant = await resolveTenant({ rawQuery, cookieHeader });
         const result = await post(Buffer.concat(chunks).toString("utf8"), tenant?.orgId ?? null);
         res.writeHead(result.status, {
           "content-type": result.contentType,
@@ -119,7 +137,7 @@ const server = createServer((req, res) => {
 
   void (async () => {
     // One identity resolution per request, threaded down.
-    const tenant = await resolveTenant(rawQuery);
+    const tenant = await resolveTenant({ rawQuery, cookieHeader });
     const orgId = tenant?.orgId ?? null;
 
     const withQuery = await renderWithQuery(req.url ?? "/", orgId);
