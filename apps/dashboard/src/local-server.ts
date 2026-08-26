@@ -25,8 +25,10 @@ import {
   renderStatic,
   renderWithQuery,
 } from "./app.js";
+import { handleAdmin } from "./admin-routes.js";
+import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
-import { resolveTenant } from "./tenant.js";
+import { isAdminWithoutTenant, resolveTenant } from "./tenant.js";
 
 type Mode = "dev" | "rc";
 
@@ -135,10 +137,46 @@ const server = createServer((req, res) => {
     return;
   }
 
+  // The admin console. Every path under /admin goes through requireAdmin before
+  // any handler runs — it is the one surface that crosses tenants.
+  if (path.startsWith("/admin")) {
+    const chunks: Buffer[] = [];
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
+      void (async () => {
+        const token = parseCookies(cookieHeader)[SESSION_COOKIE] ?? "";
+        const session = await verifySession(token);
+        const admin = await handleAdmin(
+          path,
+          req.method ?? "GET",
+          rawQuery,
+          Buffer.concat(chunks).toString("utf8"),
+          session,
+        );
+        if (!admin) {
+          res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+          res.end("Not found.");
+          return;
+        }
+        res.writeHead(admin.status, admin.headers);
+        res.end(admin.body);
+      })();
+    });
+    return;
+  }
+
   void (async () => {
     // One identity resolution per request, threaded down.
     const tenant = await resolveTenant({ rawQuery, cookieHeader });
     const orgId = tenant?.orgId ?? null;
+
+    // An admin has no tenant, so the client view has nothing for them. Send
+    // them to the console rather than to a page that reads as broken.
+    if (!orgId && (await isAdminWithoutTenant({ rawQuery, cookieHeader }))) {
+      res.writeHead(303, { location: "/admin", "cache-control": "no-store" });
+      res.end();
+      return;
+    }
 
     const withQuery = await renderWithQuery(req.url ?? "/", orgId);
     const { status, contentType, body } = withQuery ?? (await renderPath(path, orgId));

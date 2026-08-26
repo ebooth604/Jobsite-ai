@@ -16,8 +16,10 @@ import {
   renderStatic,
   renderWithQuery,
 } from "./app.js";
+import { handleAdmin } from "./admin-routes.js";
+import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
-import { resolveTenant } from "./tenant.js";
+import { isAdminWithoutTenant, resolveTenant } from "./tenant.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
@@ -129,6 +131,36 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
       ...(cookies.length > 0 ? { cookies } : {}),
       body: result.body,
     };
+  }
+
+  // The admin console. Unlike everything else it crosses tenants, so it is
+  // gated on the admins group rather than on a tenant binding — see
+  // requireAdmin. It is reachable in production, deliberately: an admin surface
+  // only the local dev server serves is one the founder cannot use.
+  if (path.startsWith("/admin")) {
+    const body = event.isBase64Encoded
+      ? Buffer.from(event.body ?? "", "base64").toString("utf8")
+      : (event.body ?? "");
+    const session = await verifySession(parseCookies(cookieHeader)[SESSION_COOKIE] ?? "");
+    const admin = await handleAdmin(
+      path,
+      event.requestContext?.http?.method ?? "GET",
+      rawQuery,
+      body,
+      session,
+    );
+    if (admin) {
+      return {
+        statusCode: admin.status,
+        headers: {
+          ...admin.headers,
+          "strict-transport-security": HSTS,
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "no-referrer",
+        },
+        body: admin.body,
+      };
+    }
   }
 
   // One identity resolution per request, threaded down. Nothing below re-derives

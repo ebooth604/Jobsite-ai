@@ -57,6 +57,11 @@ export async function resolveTenant(identity: RequestIdentity): Promise<Tenant |
   const session = await verifySession(token);
 
   if (session) {
+    // An administrator belongs to no tenant. That is the point of the role, and
+    // the caller sends them to the console rather than rendering an empty
+    // client view — see `isAdminWithoutTenant`.
+    if (!session.orgId) return null;
+
     const orgs = await listOrgs();
     const org = orgs.find((o) => o.id === session.orgId);
     // A token whose orgId names an organization that no longer exists is a
@@ -78,6 +83,19 @@ export async function resolveTenant(identity: RequestIdentity): Promise<Tenant |
   }
 
   return null;
+}
+
+/**
+ * True when this request is a signed-in administrator with no tenant of their
+ * own, so the client view has nothing to show them.
+ *
+ * Used to send them to the console instead of a page that reads as broken —
+ * "nothing to show" is the correct answer and the wrong destination.
+ */
+export async function isAdminWithoutTenant(identity: RequestIdentity): Promise<boolean> {
+  const token = parseCookies(identity.cookieHeader)[SESSION_COOKIE] ?? "";
+  const session = await verifySession(token);
+  return Boolean(session?.isAdmin && !session.orgId);
 }
 
 /** Every tenant, for the dev switcher's own UI. Never used to serve data. */

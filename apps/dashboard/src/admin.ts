@@ -34,7 +34,9 @@ const HTML = "text/html; charset=utf-8";
  * Mounted only by the dev server. Contact and Help used to live here; they are
  * public now and route through app.ts like any other page.
  */
-export const ADMIN_PATHS = new Set(["/admin", "/admin.js"]);
+// The console at /admin supersedes this form for creating organizations, so the
+// onboarding record moves aside rather than competing for the same path.
+export const ADMIN_PATHS = new Set(["/admin/onboarding", "/admin.js"]);
 
 /** Live-mounting requires BOTH the flag and a credential. */
 export function adminEnabledRemotely(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -75,7 +77,7 @@ export const UNAUTHORIZED: AdminResponse = {
  * this only knows how to draw it.
  */
 export function renderAdmin(path: string, script: (path: string) => string): AdminResponse | null {
-  if (path === "/admin") {
+  if (path === "/admin/onboarding") {
     return { status: 200, contentType: HTML, body: adminView() };
   }
   if (path === "/admin.js") {

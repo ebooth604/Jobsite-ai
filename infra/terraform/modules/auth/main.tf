@@ -63,6 +63,18 @@ resource "aws_cognito_user_pool" "main" {
   }
 }
 
+# Administrators. Membership arrives in the ID token as `cognito:groups`, so the
+# check is a claim read rather than a lookup — and, more importantly, it is not
+# something a user can set about themselves. A `custom:isAdmin` attribute would
+# be writable by the user unless carefully locked down; group membership is only
+# ever changed by an operator with pool permissions.
+resource "aws_cognito_user_group" "admins" {
+  name         = "admins"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Cross-tenant administrative access to every organization."
+  precedence   = 1
+}
+
 resource "aws_cognito_user_pool_client" "main" {
   name         = "${var.name_prefix}-dashboard"
   user_pool_id = aws_cognito_user_pool.main.id

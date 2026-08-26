@@ -25,7 +25,12 @@ export {
   listScopeItems,
   type OrgRow,
   type ProjectRow,
+  removeEntity,
+  removeProjectCascade,
+  saveHours,
   saveOrg,
+  saveProject,
+  saveScopeItem,
   type ScopeItemRow,
 } from "./repo.js";
 export { ORG_A, ORG_B, SEED_ORGS, type SeedOrg } from "./seed.js";

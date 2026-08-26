@@ -55,15 +55,30 @@ export interface Session {
   orgId: string;
   email: string;
   subject: string;
+  /**
+   * Cross-tenant administrative access, from `cognito:groups`.
+   *
+   * A claim rather than an attribute on purpose: a user cannot put themselves
+   * in a group, whereas a `custom:isAdmin` attribute would be writable by them
+   * unless the app client's write permissions were carefully locked down. The
+   * check is therefore something the identity provider asserts, not something
+   * the request carries.
+   */
+  isAdmin: boolean;
 }
+
+const ADMIN_GROUP = "admins";
 
 /**
  * Verifies a token and extracts the session.
  *
  * Returns null for anything that does not verify — bad signature, wrong
- * audience, expired, or missing the tenant claim. A user with no `custom:orgId`
- * is authenticated but belongs to no organization, and is deliberately treated
- * as having no session rather than being shown a default tenant's data.
+ * audience, expired, or belonging to nobody. A user with neither an org nor
+ * admin group is authenticated but has no access, and is treated as having no
+ * session rather than being shown a default tenant's data.
+ *
+ * An administrator is allowed to have no `custom:orgId`: they are not a member
+ * of any one tenant, which is the point.
  */
 export async function verifySession(token: string): Promise<Session | null> {
   if (!token || !authConfigured()) return null;
@@ -71,12 +86,17 @@ export async function verifySession(token: string): Promise<Session | null> {
   try {
     const payload = await jwtVerifier().verify(token);
     const orgId = typeof payload["custom:orgId"] === "string" ? payload["custom:orgId"] : "";
-    if (!orgId) return null;
+
+    const groups = payload["cognito:groups"];
+    const isAdmin = Array.isArray(groups) && groups.includes(ADMIN_GROUP);
+
+    if (!orgId && !isAdmin) return null;
 
     return {
       orgId,
       email: typeof payload.email === "string" ? payload.email : "",
       subject: String(payload.sub ?? ""),
+      isAdmin,
     };
   } catch {
     return null;
