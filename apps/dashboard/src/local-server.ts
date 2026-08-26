@@ -24,11 +24,17 @@ import {
   renderStatic,
   renderWithQuery,
 } from "./app.js";
+import { resolveTenant } from "./tenant.js";
 
 type Mode = "dev" | "rc";
 
 const MODE: Mode = process.env.SITEWIREAI_MODE === "rc" ? "rc" : "dev";
 process.env.SITEWIREAI_MODE = MODE;
+
+// The `?org=` switcher is a development affordance and is enabled here, in the
+// dev server only. `rc` mirrors production, where the flag is absent and every
+// request resolves to the default tenant. See tenant.ts.
+if (MODE === "dev") process.env.SITEWIREAI_DEV_ORG_SWITCH = "1";
 
 const PORT = Number(process.env.PORT ?? (MODE === "rc" ? 4174 : 4173));
 const HOST = "127.0.0.1";
@@ -84,26 +90,36 @@ const server = createServer((req, res) => {
     }
   }
 
+  const rawQuery = (req.url ?? "").split("?")[1] ?? "";
+
   if ((path === "/ai" || path === "/ai/vision") && req.method === "POST") {
     const chunks: Buffer[] = [];
     req.on("data", (c: Buffer) => chunks.push(c));
     req.on("end", () => {
-      const run = path === "/ai/vision" ? handleVision : handleAssist;
-      void run(Buffer.concat(chunks).toString("utf8")).then((ai) => {
+      void (async () => {
+        const tenant = await resolveTenant(rawQuery);
+        const run = path === "/ai/vision" ? handleVision : handleAssist;
+        const ai = await run(Buffer.concat(chunks).toString("utf8"), tenant?.orgId ?? null);
         res.writeHead(ai.status, { "content-type": ai.contentType, "cache-control": "no-store" });
         res.end(ai.body);
-      });
+      })();
     });
     return;
   }
 
-  const withQuery = renderWithQuery(req.url ?? "/");
-  const { status, contentType, body } = withQuery ?? renderPath(path);
-  res.writeHead(status, {
-    "content-type": contentType,
-    "cache-control": "no-store",
-  });
-  res.end(body);
+  void (async () => {
+    // One identity resolution per request, threaded down.
+    const tenant = await resolveTenant(rawQuery);
+    const orgId = tenant?.orgId ?? null;
+
+    const withQuery = await renderWithQuery(req.url ?? "/", orgId);
+    const { status, contentType, body } = withQuery ?? (await renderPath(path, orgId));
+    res.writeHead(status, {
+      "content-type": contentType,
+      "cache-control": "no-store",
+    });
+    res.end(body);
+  })();
 });
 
 server.listen(PORT, HOST, () => {

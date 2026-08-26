@@ -34,7 +34,6 @@ export interface Capture {
    * existing at all — so nothing in this app groups by it.
    */
   capturedBy: string;
-  faceBlurStatus: "blurred" | "failed";
   origin: CaptureOrigin;
 }
 
@@ -42,7 +41,11 @@ export interface QuantityEstimate {
   id: string;
   captureId: string;
   scopeItemId: string;
-  estimatedQuantity: number;
+  /**
+   * Null when there is no measurement — which is not the same as a measured
+   * zero, and must never be summed as one. `isCountableEstimate` is the guard.
+   */
+  estimatedQuantity: number | null;
   confidence: number;
   /** A model that declines to guess. Counted, never silently treated as zero. */
   abstained: boolean;

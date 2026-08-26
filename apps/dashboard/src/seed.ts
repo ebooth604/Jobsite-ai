@@ -71,7 +71,7 @@ const simulated = (
   area,
   capturedAt,
   capturedBy,
-  faceBlurStatus: "blurred",
+
   origin: "simulated",
 });
 

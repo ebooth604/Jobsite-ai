@@ -9,6 +9,7 @@
     "serve:rc": "tsc --build && node -e \"process.env.SITEWIREAI_MODE=\\\"rc\\\";import(\\\"./dist/local-server.js\\\")\""
   },
   "dependencies": {
+    "@sitewireai/db": "workspace:*",
     "@sitewireai/shared-types": "workspace:*"
   },
   "devDependencies": {

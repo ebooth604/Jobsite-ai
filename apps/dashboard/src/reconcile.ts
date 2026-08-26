@@ -27,9 +27,18 @@ export function isJoinableHours(record: LabourHoursRecord): boolean {
   return record.scopeItemId !== null && record.normalizationFlags.length === 0;
 }
 
-/** Estimates that carry a usable quantity. Abstention is absence, not zero. */
-export function isCountableEstimate(estimate: QuantityEstimate): boolean {
-  return !estimate.abstained;
+/**
+ * Estimates that carry a usable quantity. Abstention is absence, not zero.
+ *
+ * Both halves matter. `abstained` is the model declining to guess; a null
+ * quantity is the absence of a figure for any reason. Either one summed as zero
+ * would understate installed work and inflate the factor against it, so neither
+ * is allowed past.
+ */
+export function isCountableEstimate(
+  estimate: QuantityEstimate,
+): estimate is QuantityEstimate & { estimatedQuantity: number } {
+  return !estimate.abstained && estimate.estimatedQuantity !== null;
 }
 
 export interface ReconcileInput {

@@ -20,6 +20,9 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@sitewireai/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@sitewireai/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types

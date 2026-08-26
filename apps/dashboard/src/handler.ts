@@ -9,12 +9,16 @@
  */
 
 import { handleAssist, handleVision, renderPath, renderStatic, renderWithQuery } from "./app.js";
+import { resolveTenant } from "./tenant.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
   rawQueryString?: string;
   body?: string;
   isBase64Encoded?: boolean;
+  // Declared for the milestone that reads an Authorization header here. Today
+  // nothing does, and every request resolves to the default tenant.
+  headers?: Record<string, string | undefined>;
   requestContext?: { http?: { method?: string } };
 }
 
@@ -90,11 +94,17 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
     };
   }
 
+  // One identity resolution per request, threaded down. Nothing below re-derives
+  // a tenant from the URL.
+  const tenant = await resolveTenant(event.rawQueryString ?? "");
+  const orgId = tenant?.orgId ?? null;
+
   if ((path === "/ai" || path === "/ai/vision") && event.requestContext?.http?.method === "POST") {
     const raw = event.isBase64Encoded
       ? Buffer.from(event.body ?? "", "base64").toString("utf8")
       : (event.body ?? "");
-    const ai = path === "/ai/vision" ? await handleVision(raw) : await handleAssist(raw);
+    const ai =
+      path === "/ai/vision" ? await handleVision(raw, orgId) : await handleAssist(raw, orgId);
     return {
       statusCode: ai.status,
       headers: {
@@ -129,8 +139,8 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
   }
 
   const url = event.rawQueryString ? `${path}?${event.rawQueryString}` : path;
-  const withQuery = renderWithQuery(url);
-  const { status, contentType, body } = withQuery ?? renderPath(path);
+  const withQuery = await renderWithQuery(url, orgId);
+  const { status, contentType, body } = withQuery ?? (await renderPath(path, orgId));
 
   return {
     statusCode: status,
