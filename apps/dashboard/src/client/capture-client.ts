@@ -696,7 +696,7 @@ async function describeActive(): Promise<void> {
 
   button.disabled = true;
   status.className = "muted";
-  status.textContent = "Sending the redacted image to Bedrock in ca-central-1…";
+  status.textContent = "Sending the redacted image for analysis…";
 
   try {
     const image = await redactedJpegForVision(shot);

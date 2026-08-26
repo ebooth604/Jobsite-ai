@@ -142,15 +142,15 @@ ${demoLink()}
   <strong>Photos stay in this tab unless you press "Describe with AI".</strong>
   Reading, redacting and previewing all happen locally — nothing is uploaded by
   simply adding a photo. <em>Describe with AI</em> is the one exception: it sends
-  the <strong>redacted</strong> image to Amazon Bedrock in <code>ca-central-1</code>,
-  and the button stays disabled until faces are redacted or you declare there are
-  none, so an unredacted photo has no path off this machine. It may propose an area
-  and a scope item; it may never propose a quantity.
+  the <strong>redacted</strong> image to Anthropic's API, <strong>outside
+  Canada</strong>. The button stays disabled until faces are redacted or you
+  declare there are none, so an unredacted photo has no path off this machine.
+  It may propose an area and a scope item; it may never propose a quantity.
   <br><br>
-  This mirrors the real capture path: the mobile app redacts faces
-  <em>on-device before sending</em>, and the ingestion service re-checks
-  server-side regardless. Two independent passes, because a client-side bug is not
-  an acceptable failure mode for a promise made in a contract.
+  The redaction here is real — regions are mosaicked into the pixels of a fresh
+  canvas before anything is encoded, so the original bytes are never sent. It is
+  a tool you apply, though, not an automatic guarantee: what you do not cover
+  stays visible.
 </div>
 
 <div class="capture-grid">

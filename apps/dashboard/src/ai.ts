@@ -1,5 +1,5 @@
 /**
- * The assist layer: a Bedrock-backed helper that fills forms and explains numbers.
+ * The assist layer: a helper that fills forms and explains numbers.
  *
  * It operates at ASSIST level, deliberately. Every action it returns is applied to
  * the UI for a human to see and submit — nothing commits itself, and three inputs
@@ -10,38 +10,54 @@
  *   - the "no people in frame" declaration
  *
  * Those are the integrity-bearing inputs. This product's whole claim is that it
- * does not invent quantities, does not quietly convert an abstention into a
- * number, and does not let a face-blur decision be made by something that cannot
- * see the photo. An assistant that could set them could undo all three silently,
- * so the tool schema simply does not expose them.
+ * does not invent quantities and does not quietly convert an abstention into a
+ * number. An assistant that could set them could undo that silently, so the tool
+ * schema simply does not expose them.
  *
  * Model output is untrusted input. Every field the model returns is validated
  * against an allowlist built from real data before it leaves this module.
+ *
+ * **Provider: the Anthropic API, the same model the classifier uses.** This was
+ * Bedrock running `ca.amazon.nova-lite-v1:0` on a Canadian inference profile.
+ * Two models across two vendors meant two bills, two failure modes and two sets
+ * of prompt quirks for one product; consolidating removes all three.
+ *
+ * The residency the Canadian profile bought is genuinely gone — photos now leave
+ * Canada for inference. That is a real change, recorded here rather than left to
+ * be discovered: see the `canada-at-rest` tag in infra/terraform/locals.tf and
+ * the note on the contact page.
  */
 
-import {
-  BedrockRuntimeClient,
-  ConverseCommand,
-  type Message,
-  type Tool,
-} from "@aws-sdk/client-bedrock-runtime";
+import Anthropic from "@anthropic-ai/sdk";
 import type { ScopeItem } from "./types.js";
 
 /**
- * `ca.` prefix: the Canadian inference profile. A global profile would route to
- * any commercial region, which is exactly the residency commitment this project
- * treats as contractual (business plan §4.3, ADR-0001).
+ * One model across the product. Override with SITEWIREAI_MODEL, which the
+ * classifier reads too, so a swap moves both surfaces together.
  */
-const MODEL_ID = "ca.amazon.nova-lite-v1:0";
+const MODEL_ID = process.env.SITEWIREAI_MODEL ?? "claude-sonnet-5";
 
-/** Explicit, always. Unset defaults to the model maximum and reserves far more quota. */
-const MAX_TOKENS = 600;
+/** Explicit, always. Unset defaults high and reserves far more quota than this needs. */
+const MAX_TOKENS = 1024;
 
-const client = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION ?? "ca-central-1",
-  maxAttempts: 3,
-  retryMode: "adaptive",
-});
+let client: Anthropic | null = null;
+
+/** Lazy so the app boots, and every non-AI page renders, without a key present. */
+function anthropic(): Anthropic {
+  if (!client) client = new Anthropic({ maxRetries: 3 });
+  return client;
+}
+
+/** Anthropic's tool shape. Bedrock nested this under `toolSpec`/`inputSchema.json`. */
+interface AiTool {
+  name: string;
+  description: string;
+  input_schema: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
 
 export interface AssistAction {
   type: "fill_capture_form" | "suggest_cost_code_mapping" | "navigate";
@@ -59,59 +75,60 @@ export interface AssistResult {
 const NAV_PATHS = ["/", "/productivity", "/alerts", "/capture", "/bid", "/data-quality"];
 const ORIGINS = ["field", "self_measured", "simulated"];
 
-function tools(scopeItems: ScopeItem[]): Tool[] {
+/**
+ * The tool surface.
+ *
+ * Note what has no field anywhere in it: estimated quantity, the abstain flag,
+ * the no-people declaration. A schema the model cannot express a value through
+ * is a stronger constraint than an instruction it can drift away from — the
+ * same reasoning the classifier's schema uses.
+ *
+ * `scopeItemId` is enumerated from the **caller's own** scope items, so the
+ * model cannot name another tenant's id even by accident. `validate()` re-checks
+ * it against the same list afterwards.
+ */
+function tools(scopeItems: ScopeItem[]): AiTool[] {
   return [
     {
-      toolSpec: {
-        name: "fill_capture_form",
-        description:
-          "Fill fields on the capture form for the user to review. Cannot set estimated quantity, the abstain flag, or the no-people declaration — those are the operator's alone.",
-        inputSchema: {
-          json: {
-            type: "object",
-            properties: {
-              scopeItemId: {
-                type: "string",
-                description: `One of: ${scopeItems.map((s) => s.id).join(", ")}`,
-              },
-              area: { type: "string", description: "Free text, e.g. 'L5 north corridor'" },
-              capturedAt: { type: "string", description: "ISO date, YYYY-MM-DD" },
-              origin: { type: "string", description: `One of: ${ORIGINS.join(", ")}` },
-            },
+      name: "fill_capture_form",
+      description:
+        "Fill fields on the capture form for the user to review. Cannot set estimated quantity, the abstain flag, or the no-people declaration — those are the operator's alone.",
+      input_schema: {
+        type: "object",
+        properties: {
+          scopeItemId: {
+            type: "string",
+            enum: scopeItems.map((s) => s.id),
+            description: "The scope item this capture belongs to.",
           },
+          area: { type: "string", description: "Free text, e.g. 'L5 north corridor'" },
+          capturedAt: { type: "string", description: "ISO date, YYYY-MM-DD" },
+          origin: { type: "string", enum: ORIGINS },
         },
       },
     },
     {
-      toolSpec: {
-        name: "suggest_cost_code_mapping",
-        description:
-          "Highlight a suggested cost-code to bid-line mapping on the bid page. The user still applies it; nothing is mapped automatically.",
-        inputSchema: {
-          json: {
-            type: "object",
-            properties: {
-              costCode: { type: "string" },
-              bidLine: { type: "number", description: "Bid line number" },
-            },
-            required: ["costCode", "bidLine"],
-          },
+      name: "suggest_cost_code_mapping",
+      description:
+        "Highlight a suggested cost-code to bid-line mapping on the bid page. The user still applies it; nothing is mapped automatically.",
+      input_schema: {
+        type: "object",
+        properties: {
+          costCode: { type: "string" },
+          bidLine: { type: "number", description: "Bid line number" },
         },
+        required: ["costCode", "bidLine"],
       },
     },
     {
-      toolSpec: {
-        name: "navigate",
-        description: "Move the user to another page in the app.",
-        inputSchema: {
-          json: {
-            type: "object",
-            properties: {
-              path: { type: "string", description: `One of: ${NAV_PATHS.join(", ")}` },
-            },
-            required: ["path"],
-          },
+      name: "navigate",
+      description: "Move the user to another page in the app.",
+      input_schema: {
+        type: "object",
+        properties: {
+          path: { type: "string", enum: NAV_PATHS },
         },
+        required: ["path"],
       },
     },
   ];
@@ -137,16 +154,27 @@ function systemPrompt(context: string): string {
 }
 
 /**
- * Nova wraps output in pseudo-XML — `<thinking>` for scratch work, `<response>`
- * around the answer. The thinking is not an answer and reads as a malfunction if
- * shown; the wrapper tags are noise. Strip the thinking blocks entirely, then any
- * remaining tags, so a user sees prose.
+ * Pulls prose and tool calls out of a response.
+ *
+ * Nova needed a `cleanText` pass here to strip `<thinking>` scratch work and
+ * stray pseudo-XML from its prose. Claude returns clean text, so that stripping
+ * is gone rather than kept "just in case" — a regex that silently eats angle
+ * brackets is a liability once it is no longer earning its place.
  */
-function cleanText(text: string): string {
-  return text
-    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
-    .replace(/<\/?[a-z_]+>/gi, "")
-    .trim();
+function readBlocks(content: Anthropic.ContentBlock[]): {
+  text: string;
+  calls: { name: string; input: Record<string, unknown> }[];
+} {
+  let text = "";
+  const calls: { name: string; input: Record<string, unknown> }[] = [];
+
+  for (const block of content) {
+    if (block.type === "text") text += block.text;
+    if (block.type === "tool_use") {
+      calls.push({ name: block.name, input: (block.input ?? {}) as Record<string, unknown> });
+    }
+  }
+  return { text, calls };
 }
 
 /** Model output is untrusted: everything here is checked against real data. */
@@ -208,33 +236,23 @@ export async function assist(
   const trimmed = userMessage.trim().slice(0, 2000);
   if (!trimmed) return { reply: "Ask me something about this project.", actions: [] };
 
-  const messages: Message[] = [{ role: "user", content: [{ text: trimmed }] }];
+  const response = await anthropic().messages.create({
+    model: MODEL_ID,
+    max_tokens: MAX_TOKENS,
+    system: systemPrompt(context),
+    messages: [{ role: "user", content: trimmed }],
+    tools: tools(scopeItems),
+  });
 
-  const response = await client.send(
-    new ConverseCommand({
-      modelId: MODEL_ID,
-      system: [{ text: systemPrompt(context) }],
-      messages,
-      inferenceConfig: { maxTokens: MAX_TOKENS, temperature: 0.2 },
-      toolConfig: { tools: tools(scopeItems) },
-    }),
-  );
-
-  const blocks = response.output?.message?.content ?? [];
+  const { text, calls } = readBlocks(response.content);
   const actions: AssistAction[] = [];
-  let reply = "";
 
-  for (const block of blocks) {
-    if (block.text) reply += cleanText(block.text);
-    if (block.toolUse?.name) {
-      const action = validate(
-        block.toolUse.name,
-        (block.toolUse.input ?? {}) as Record<string, unknown>,
-        scopeItems,
-      );
-      if (action) actions.push(action);
-    }
+  for (const call of calls) {
+    const action = validate(call.name, call.input, scopeItems);
+    if (action) actions.push(action);
   }
+
+  let reply = text;
 
   // A tool-only turn can come back with no prose. The fallback has to match what
   // actually happened — telling someone to "review the fields" after a navigation
@@ -262,9 +280,12 @@ export async function assist(
  *
  *   - Only the REDACTED render is ever sent. The client gates the button on the
  *     same redaction check that gates queueing, so an unredacted photo has no
- *     path here at all.
- *   - It goes to the Canadian inference profile, so a jobsite photo does not
- *     leave the residency boundary.
+ *     path here at all. That gate is still real — the capture console still
+ *     mosaics pixels into a fresh canvas before any encode.
+ *   - It leaves Canada. This used to run on a Canadian Bedrock inference
+ *     profile; it now calls the Anthropic API, and the residency that bought is
+ *     gone. Stated here because a comment claiming otherwise would be worse
+ *     than no comment.
  *   - It may propose an AREA and a SCOPE ITEM, and describe what is visible.
  *     It may not propose a quantity. Quantity belongs to a calibrated per-trade
  *     model with an abstention threshold (technical plan §5), not to a general
@@ -289,65 +310,64 @@ export async function describeCapture(
     .map((s) => `${s.id} = ${s.trade}, ${s.description} (${s.unitOfMeasure})`)
     .join("\n");
 
-  const response = await client.send(
-    new ConverseCommand({
-      modelId: MODEL_ID,
-      system: [
-        {
-          text: [
-            "You are looking at a redacted construction site photo for SiteWireAi.",
-            "",
-            "Describe in two sentences what trade work is visible and any obstruction,",
-            "stacked trade, or access problem. Then, if you can tell, use the tool to",
-            "propose which scope item it belongs to and a short area label.",
-            "",
-            "Absolute rules:",
-            "- NEVER state or estimate a quantity, count, area measurement or percentage",
-            "  complete. You are not the quantity model, and a number from you would be",
-            "  a guess presented as a measurement.",
-            "- If the photo is unclear, say so plainly and propose nothing.",
-            "- Mosaicked blocks are deliberate face redaction. Do not comment on them.",
-            "",
-            "Scope items on this project:",
-            scopeList,
-          ].join("\n"),
-        },
-      ],
-      messages: [
-        {
-          role: "user",
-          content: [
-            { image: { format: "jpeg", source: { bytes } } },
-            { text: "Describe this capture and propose the scope item and area if clear." },
-          ],
-        },
-      ],
-      inferenceConfig: { maxTokens: 400, temperature: 0.2 },
-      toolConfig: { tools: [tools(scopeItems)[0] as Tool] },
-    }),
-  );
+  // Only the form-filling tool is exposed here. Navigation and cost-code mapping
+  // are not decisions to make from a photograph.
+  const fillTool = tools(scopeItems)[0];
+  if (!fillTool) throw new Error("tool surface is empty");
 
-  const blocks = response.output?.message?.content ?? [];
-  let description = "";
+  const response = await anthropic().messages.create({
+    model: MODEL_ID,
+    max_tokens: 1024,
+    system: [
+      "You are looking at a redacted construction site photo for SiteWireAi.",
+      "",
+      "Describe in two sentences what trade work is visible and any obstruction,",
+      "stacked trade, or access problem. Then, if you can tell, use the tool to",
+      "propose which scope item it belongs to and a short area label.",
+      "",
+      "Absolute rules:",
+      "- NEVER state or estimate a quantity, count, area measurement or percentage",
+      "  complete. You are not the quantity model, and a number from you would be",
+      "  a guess presented as a measurement.",
+      "- If the photo is unclear, say so plainly and propose nothing.",
+      "- Mosaicked blocks are deliberate face redaction. Do not comment on them.",
+      "",
+      "Scope items on this project:",
+      scopeList,
+    ].join("\n"),
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: { type: "base64", media_type: "image/jpeg", data: bytes.toString("base64") },
+          },
+          {
+            type: "text",
+            text: "Describe this capture and propose the scope item and area if clear.",
+          },
+        ],
+      },
+    ],
+    tools: [fillTool],
+  });
+
+  const { text: raw, calls } = readBlocks(response.content);
+  let description = raw;
   let fields: Record<string, string> = {};
 
-  for (const block of blocks) {
-    if (block.text) description += cleanText(block.text);
-    if (block.toolUse?.name === "fill_capture_form") {
-      const action = validate(
-        "fill_capture_form",
-        (block.toolUse.input ?? {}) as Record<string, unknown>,
-        scopeItems,
-      );
-      if (action?.fields) {
-        // Belt and braces: the tool has no quantity field, and these are stripped
-        // again here in case the schema is ever widened without revisiting this.
-        const { scopeItemId, area } = action.fields;
-        fields = {
-          ...(scopeItemId ? { scopeItemId } : {}),
-          ...(area ? { area } : {}),
-        };
-      }
+  for (const call of calls) {
+    if (call.name !== "fill_capture_form") continue;
+    const action = validate("fill_capture_form", call.input, scopeItems);
+    if (action?.fields) {
+      // Belt and braces: the tool has no quantity field, and these are stripped
+      // again here in case the schema is ever widened without revisiting this.
+      const { scopeItemId, area } = action.fields;
+      fields = {
+        ...(scopeItemId ? { scopeItemId } : {}),
+        ...(area ? { area } : {}),
+      };
     }
   }
 

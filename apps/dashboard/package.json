@@ -5,15 +5,15 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --build",
-    "serve": "tsc --build && node dist/local-server.js",
-    "serve:rc": "tsc --build && node -e \"process.env.SITEWIREAI_MODE=\\\"rc\\\";import(\\\"./dist/local-server.js\\\")\""
+    "serve": "tsc --build && node --env-file-if-exists=.env dist/local-server.js",
+    "serve:rc": "tsc --build && node --env-file-if-exists=.env -e \"process.env.SITEWIREAI_MODE=\\\"rc\\\";import(\\\"./dist/local-server.js\\\")\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "@sitewireai/db": "workspace:*",
     "@sitewireai/shared-types": "workspace:*"
   },
   "devDependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.1116.0",
     "@types/node": "^26.2.0"
   }
 }
