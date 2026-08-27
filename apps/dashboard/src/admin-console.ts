@@ -278,6 +278,42 @@ ${
   </form>
 </div>
 
+${
+  detail.scopeItems.length === 0
+    ? ""
+    : `<div class="panel">
+  <h2 style="margin-top:0">Upload a photo</h2>
+  <p class="muted" style="font-size:13px;margin-top:-6px">Goes through the same path a client’s
+  capture does — stored, then classified on arrival. Adjust the reading afterwards from the
+  client’s <code>/captures</code> page.</p>
+  <div id="admin-upload">
+    <input type="hidden" id="au-org" value="${escapeHtml(org.id)}">
+    <div class="row">
+      <div><label for="au-scope">Scope item</label>
+        <select id="au-scope">${scopeOptions}</select></div>
+      <div><label for="au-area">Area</label><input id="au-area" placeholder="L5 north corridor"></div>
+      <div><label for="au-date">Captured on</label><input id="au-date" type="date"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label for="au-origin">Origin</label>
+        <select id="au-origin">
+          <option value="field">field</option>
+          <option value="self_measured">self_measured</option>
+          <option value="simulated">simulated</option>
+        </select></div>
+      <div><label for="au-by">Captured by</label><input id="au-by" placeholder="Foreman name"></div>
+      <div><label for="au-file">Photo</label><input id="au-file" type="file" accept="image/*"></div>
+    </div>
+    <div style="margin-top:12px">
+      <button type="button" class="btn primary" id="au-submit" disabled>Upload and classify</button>
+      <span id="au-status" class="muted" style="margin-left:10px;font-size:13px"></span>
+    </div>
+  </div>
+  <p class="muted" style="font-size:13px">Origin is not cosmetic: <code>simulated</code> may train
+  a model and may never measure one.</p>
+</div>
+<script type="module" src="/admin/upload.js"></script>`
+}
 <h2>Scope items</h2>
 <p class="muted" style="font-size:13px;margin-top:-6px">The bid lines everything reconciles
 against. A productivity factor is installed rate divided by the budgeted rate here, so these

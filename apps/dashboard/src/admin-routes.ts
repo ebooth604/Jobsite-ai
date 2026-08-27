@@ -7,15 +7,23 @@
  * request with no session at all gets sent to sign in.
  *
  * Writes are form posts rather than JSON, deliberately: this is a server-
- * rendered console with no client script, so there is no bundle to keep in step
- * and nothing to go stale between the form and the handler.
+ * rendered console, so there is nothing to go stale between a form and its
+ * handler.
+ *
+ * The photo upload is the one exception, and it is an exception because a file
+ * cannot be posted this way without multipart parsing or a hidden iframe. It
+ * posts JSON from `admin-upload-client`, and lands in `saveCapture` — the same
+ * function the client capture console calls — so an admin's photo is stored and
+ * classified by exactly the same path a client's is.
  */
 
 import { randomUUID } from "node:crypto";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import * as db from "@sitewireai/db";
 import { deniedView, type OrgDetail, orgView, type OrgSummary, overviewView } from "./admin-console.js";
+import { captureClientScriptFor } from "./app.js";
 import type { Session } from "./auth.js";
+import { parseUpload, saveCapture } from "./captures.js";
 
 export interface AdminResponse {
   status: number;
@@ -29,6 +37,12 @@ const html = (status: number, body: string): AdminResponse => ({
   status,
   headers: { "content-type": HTML, "cache-control": "no-store" },
   body,
+});
+
+const json = (status: number, body: unknown): AdminResponse => ({
+  status,
+  headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+  body: JSON.stringify(body),
 });
 
 const redirect = (to: string): AdminResponse => ({
@@ -175,7 +189,58 @@ export async function handleAdmin(
     return html(200, orgView(detail, email, message, bad));
   }
 
+  // The console's one client script, and the only thing here served as JS.
+  if (method === "GET" && path === "/admin/upload.js") {
+    return {
+      status: 200,
+      headers: {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+      },
+      body: captureClientScriptFor("admin-upload-client.js"),
+    };
+  }
+
   if (method !== "POST") return null;
+
+  /**
+   * The photo upload, handled before the form parse because it is JSON.
+   *
+   * It calls `saveCapture` — the same function the client capture console calls —
+   * so an admin's photo is stored and classified by exactly the same path. A
+   * second upload pipeline would be a second place for the classifier to be
+   * forgotten.
+   *
+   * The scope items are read scoped to the named org, which is what makes the
+   * project derivation safe: `saveCapture` refuses a scope item that tenant does
+   * not own, and derives the project from the one it accepts.
+   */
+  if (path === "/admin/capture/upload") {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(rawBody || "{}") as Record<string, unknown>;
+    } catch {
+      return json(400, { error: "Body was not JSON." });
+    }
+
+    const uploadOrg = typeof parsed.orgId === "string" ? parsed.orgId : "";
+    if (!uploadOrg) return json(400, { error: "An organization is required." });
+
+    const upload = parseUpload(rawBody);
+    if ("error" in upload) return json(400, { error: upload.error });
+
+    const scopeItems = await db.listScopeItems(uploadOrg);
+    const saved = await saveCapture(uploadOrg, upload, scopeItems);
+    if ("error" in saved) return json(400, { error: saved.error });
+
+    return json(201, {
+      ok: true,
+      captureId: saved.captureId,
+      // Best-effort on the server; the uploader reports which happened rather
+      // than implying a reading exists when the model was unreachable.
+      classified: saved.classification !== null,
+    });
+  }
 
   const form = new URLSearchParams(rawBody);
   const orgId = field(form, "orgId");
