@@ -10,7 +10,19 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
 #
 # Safe to re-run. Terraform converges, and the secret script overwrites the same
-# three values.
+# four values.
+#
+# **One-time step before the first run.** The API's integration, route and stage
+# were made by "quick create" and the AWS provider cannot import those, so they
+# have to be deleted once and let Terraform recreate them. The API itself keeps
+# its id — `hbxxny65sd`, which is written into the Cognito callback URLs and
+# every shared link. Route first; it holds a reference to the integration:
+#
+#   aws apigatewayv2 delete-route       --api-id hbxxny65sd --route-id 0pqflu8       --profile sitewire --region ca-central-1
+#   aws apigatewayv2 delete-integration --api-id hbxxny65sd --integration-id 82wiwmm --profile sitewire --region ca-central-1
+#   aws apigatewayv2 delete-stage       --api-id hbxxny65sd --stage-name '$default'  --profile sitewire --region ca-central-1
+#
+# The dashboard URL is down between that third command and the apply below.
 
 $ErrorActionPreference = 'Stop'
 
@@ -83,8 +95,11 @@ finally {
 # --- secret -----------------------------------------------------------------
 #
 # Terraform created an empty secret; this fills it. Values come from the
-# git-ignored apps/trainer/.env and travel over stdin, so neither the password
-# nor the API key lands in shell history.
+# git-ignored apps/trainer/.env and apps/dashboard/.env and stay inside the
+# node process, so nothing secret lands in shell history or in Terraform state.
+#
+# One secret serves both functions: the classifier reads the basic-auth pair and
+# the API key, the dashboard reads the API key and the Cognito client secret.
 
 Write-Host '- setting secret values' -ForegroundColor Cyan
 & node (Join-Path $PSScriptRoot 'set-classifier-secret.mjs') --profile $Profile --region $Region
@@ -92,6 +107,10 @@ if ($LASTEXITCODE -ne 0) { Write-Error 'setting the secret failed' }
 
 Write-Host ''
 Write-Host 'Deployed.' -ForegroundColor Green
-Write-Host "  $url"
-Write-Host '  username: sitewire'
-Write-Host '  password: in apps\trainer\.env (SITEWIREAI_BASIC_AUTH_PASSWORD)'
+Write-Host "  dashboard:  $dashboardUrl"
+Write-Host "  classifier: $url"
+Write-Host '  classifier username: sitewire'
+Write-Host '  classifier password: in apps\trainer\.env (SITEWIREAI_BASIC_AUTH_PASSWORD)'
+Write-Host ''
+Write-Host 'Both functions cache the secret per execution environment, so a' -ForegroundColor DarkGray
+Write-Host 'rotation takes effect as environments recycle rather than instantly.' -ForegroundColor DarkGray
