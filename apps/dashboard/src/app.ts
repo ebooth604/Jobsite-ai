@@ -34,6 +34,7 @@ import type {
 } from "./types.js";
 import type { ViewModel } from "./views.js";
 import { alerts, dataQuality, overview, productivity } from "./views.js";
+import { welcomeView } from "./welcome-view.js";
 
 // ---- row mapping -----------------------------------------------------------
 //
@@ -178,10 +179,11 @@ const ROUTES: Record<string, (m: ViewModel) => string> = {
   "/contact": () => contactView(),
   "/help": () => helpView(),
   "/bid": (m) => bidView(m.project, m.hours),
+  "/welcome": () => welcomeView(),
 };
 
 /** Paths that render without any tenant data, so they work signed-out. */
-const PUBLIC_ROUTES = new Set(["/contact", "/help", "/capture/demo"]);
+const PUBLIC_ROUTES = new Set(["/contact", "/help", "/capture/demo", "/welcome"]);
 
 const scriptCache = new Map<string, string>();
 

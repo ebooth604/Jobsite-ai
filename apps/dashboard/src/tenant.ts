@@ -98,6 +98,20 @@ export async function isAdminWithoutTenant(identity: RequestIdentity): Promise<b
   return Boolean(session?.isAdmin && !session.orgId);
 }
 
+/**
+ * True when the request asked for a particular tenant through the dev switcher.
+ *
+ * The front doors use it to decide whether `/` is a front door or a dashboard.
+ * A signed-out visitor gets the welcome page, but `?org=northpoint` is someone
+ * deliberately looking at a tenant in dev and should still get the dashboard.
+ * Outside dev the switcher is off, so this is always false and `/` is the
+ * welcome page for everyone without a session.
+ */
+export function wantsSpecificOrg(identity: RequestIdentity): boolean {
+  if (!devOrgSwitchEnabled()) return false;
+  return Boolean(new URLSearchParams(identity.rawQuery).get("org"));
+}
+
 /** Every tenant, for the dev switcher's own UI. Never used to serve data. */
 export async function listTenants(): Promise<Tenant[]> {
   return (await listOrgs()).map((o) => asTenant(o, "", false));

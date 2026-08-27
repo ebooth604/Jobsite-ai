@@ -19,7 +19,7 @@ import {
 import { handleAdmin } from "./admin-routes.js";
 import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
-import { isAdminWithoutTenant, resolveTenant } from "./tenant.js";
+import { isAdminWithoutTenant, resolveTenant, wantsSpecificOrg } from "./tenant.js";
 
 interface FunctionUrlEvent {
   rawPath?: string;
@@ -167,6 +167,40 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
   // a tenant from the URL.
   const tenant = await resolveTenant({ rawQuery, cookieHeader });
   const orgId = tenant?.orgId ?? null;
+
+  // An admin belongs to no tenant, so the client view has nothing for them.
+  // The local server has always done this; the deployed one did not, which
+  // meant a signed-in admin hitting the root got a page that read as broken.
+  if (path === "/" && !orgId && (await isAdminWithoutTenant({ rawQuery, cookieHeader }))) {
+    return {
+      statusCode: 303,
+      headers: {
+        location: "/admin",
+        "cache-control": "no-store",
+        "strict-transport-security": HSTS,
+      },
+      body: "",
+    };
+  }
+
+  // The root is the front door for anyone without a session. The switcher is
+  // disabled in production, so `wantsSpecificOrg` is false here and every
+  // signed-out visitor gets the two sign-in choices.
+  if (path === "/" && !tenant?.authenticated && !wantsSpecificOrg({ rawQuery, cookieHeader })) {
+    const welcome = await renderPath("/welcome", null);
+    return {
+      statusCode: welcome.status,
+      headers: {
+        "content-type": welcome.contentType,
+        "cache-control": "no-store",
+        "strict-transport-security": HSTS,
+        "content-security-policy": CSP,
+        "x-content-type-options": "nosniff",
+        "referrer-policy": "no-referrer",
+      },
+      body: welcome.body,
+    };
+  }
 
   const POSTS: Record<string, typeof handleAssist> = {
     "/ai": handleAssist,

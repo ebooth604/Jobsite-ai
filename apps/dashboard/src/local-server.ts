@@ -28,7 +28,7 @@ import {
 import { handleAdmin } from "./admin-routes.js";
 import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
-import { isAdminWithoutTenant, resolveTenant } from "./tenant.js";
+import { isAdminWithoutTenant, resolveTenant, wantsSpecificOrg } from "./tenant.js";
 
 type Mode = "dev" | "rc";
 
@@ -175,6 +175,23 @@ const server = createServer((req, res) => {
     if (!orgId && (await isAdminWithoutTenant({ rawQuery, cookieHeader }))) {
       res.writeHead(303, { location: "/admin", "cache-control": "no-store" });
       res.end();
+      return;
+    }
+
+    // The root is the front door for anyone without a session: the two sign-in
+    // choices, not a dashboard belonging to whichever tenant sorted first. An
+    // explicit `?org=` in dev still means "show me that tenant".
+    if (
+      path === "/" &&
+      !tenant?.authenticated &&
+      !wantsSpecificOrg({ rawQuery, cookieHeader })
+    ) {
+      const welcome = await renderPath("/welcome", null);
+      res.writeHead(welcome.status, {
+        "content-type": welcome.contentType,
+        "cache-control": "no-store",
+      });
+      res.end(welcome.body);
       return;
     }
 
