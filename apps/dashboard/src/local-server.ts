@@ -23,6 +23,7 @@ import {
   handleVision,
   renderPath,
   renderStatic,
+  needsTenant,
   renderWithQuery,
 } from "./app.js";
 import { handleAdmin } from "./admin-routes.js";
@@ -217,6 +218,15 @@ const server = createServer((req, res) => {
         res.end(result.body);
         return;
       }
+    }
+
+    // A tenant page with no tenant is a sign-in prompt, not a 404. This is what
+    // /admin and /captures already do; /projects did not, and it is the first
+    // item in the navigation.
+    if (!orgId && needsTenant(path)) {
+      res.writeHead(303, { location: "/login", "cache-control": "no-store" });
+      res.end();
+      return;
     }
 
     const withQuery = await renderWithQuery(req.url ?? "/", orgId);

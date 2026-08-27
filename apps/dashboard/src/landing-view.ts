@@ -68,7 +68,18 @@ const LANDING_STYLES = `
   .ready.no { color: var(--critical); }
 `;
 
-function projectCard(data: ProjectData, selectedId: string): string {
+/**
+ * `carry` is the request query, minus `project`, appended to each link.
+ *
+ * In production it is empty and irrelevant — the tenant comes from the session.
+ * In dev, `?org=` is the only thing naming the tenant, and a link that drops it
+ * resolves against whichever org sorts first, whose projects these are not. The
+ * IDOR guard then correctly refuses the id and the page falls back to the first
+ * project, so every card appears to select the same thing. That is not a broken
+ * selector; it is the tenancy check working on a link that forgot who was
+ * asking.
+ */
+function projectCard(data: ProjectData, selectedId: string, carry = ""): string {
   const worst = data.factors.reduce<number | null>(
     (acc, f) => (acc === null || f.factor < acc ? f.factor : acc),
     null,
@@ -88,7 +99,7 @@ function projectCard(data: ProjectData, selectedId: string): string {
     <div class="muted">${escapeHtml(data.project.address)} · ${escapeHtml(data.project.province)}</div>
     <div class="proj-stats">${stats}</div>
     ${worst !== null ? `<div>Lowest factor ${statusPill(statusFor(worst), worst.toFixed(2))}</div>` : ""}
-    <a class="choose" href="/projects?project=${encodeURIComponent(data.project.id)}">
+    <a class="choose" href="/projects?project=${encodeURIComponent(data.project.id)}${carry}">
       ${selected ? "Selected" : "Select project"}
     </a>
   </div>`;
@@ -158,11 +169,16 @@ function siteNav(): string {
   return `<div class="site-nav">${cards}</div>`;
 }
 
-export function landingView(all: ProjectData[], selectedId: string): string {
+export function landingView(all: ProjectData[], selectedId: string, query = ""): string {
   const selected = all.find((d) => d.project.id === selectedId) ?? all[0];
   if (!selected) throw new Error("no projects");
 
-  const cards = all.map((d) => projectCard(d, selected.project.id)).join("");
+  // Everything except `project`, which each card sets for itself.
+  const keep = new URLSearchParams(query);
+  keep.delete("project");
+  const carry = keep.toString() ? `&${keep}` : "";
+
+  const cards = all.map((d) => projectCard(d, selected.project.id, carry)).join("");
 
   const audiences: Audience[] = ["court", "arbitration", "executive"];
   const sections = audiences

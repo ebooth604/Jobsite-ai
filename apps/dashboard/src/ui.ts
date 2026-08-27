@@ -202,6 +202,8 @@ const STYLES = `
     color: var(--muted); margin: 32px 0 12px; }
   .muted { color: var(--muted); }
   .lede { color: var(--ink-2); margin: 0 0 4px; max-width: 68ch; }
+  .badge.signout { margin-left: 8px; text-decoration: none; color: var(--ink-2); }
+  .badge.signout:hover { color: var(--ink); }
   .badge { display: inline-block; padding: 3px 9px; border-radius: 999px;
     border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 
@@ -363,6 +365,7 @@ export function page(opts: PageOptions): string {
     <div class="brand">SiteWireAi<span>${escapeHtml(opts.projectName)}</span></div>
     <div>
       <span class="badge">Data region ${escapeHtml(opts.dataRegion)}</span>
+      <a class="badge signout" href="/logout">Sign out</a>
     </div>
   </div>
   <nav>${navLinks}</nav>

@@ -185,6 +185,22 @@ const ROUTES: Record<string, (m: ViewModel) => string> = {
 /** Paths that render without any tenant data, so they work signed-out. */
 const PUBLIC_ROUTES = new Set(["/contact", "/help", "/capture/demo", "/welcome"]);
 
+/**
+ * True when a path can only be rendered for a signed-in tenant.
+ *
+ * The front doors use it to send a signed-out visitor to sign in, rather than
+ * rendering "this request could not be matched to an organization" — which is a
+ * 404 dead end on `/projects`, the first item in the navigation, and the first
+ * thing anyone browsing the live site clicks.
+ */
+export function needsTenant(path: string): boolean {
+  const clean = path.length > 1 ? path.replace(/\/+$/, "") : path;
+  if (PUBLIC_ROUTES.has(clean)) return false;
+  if (CLIENT_SCRIPTS[clean]) return false;
+  if (clean.startsWith("/static/")) return false;
+  return clean === "/projects" || clean === "/projects/report" || clean in ROUTES;
+}
+
 const scriptCache = new Map<string, string>();
 
 /** Only these names are servable — the path never reaches the filesystem raw. */
@@ -361,7 +377,7 @@ export async function renderWithQuery(
     // A project id this tenant does not own selects nothing rather than 404ing
     // the whole page — the portfolio is still theirs to look at.
     const selected = projects.some((d) => d.project.id === requested) ? requested : "";
-    return { status: 200, contentType: HTML, body: landingView(projects, selected) };
+    return { status: 200, contentType: HTML, body: landingView(projects, selected, queryPart) };
   }
 
   const data = projects.find((d) => d.project.id === params.get("project"));

@@ -15,6 +15,7 @@ import {
   handleVision,
   renderPath,
   renderStatic,
+  needsTenant,
   renderWithQuery,
 } from "./app.js";
 import { handleAdmin } from "./admin-routes.js";
@@ -333,6 +334,18 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
       },
       body: asset.body.toString("base64"),
       isBase64Encoded: true,
+    };
+  }
+
+  if (!orgId && needsTenant(path)) {
+    return {
+      statusCode: 303,
+      headers: {
+        location: "/login",
+        "cache-control": "no-store",
+        "strict-transport-security": HSTS,
+      },
+      body: "",
     };
   }
 
