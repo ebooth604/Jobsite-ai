@@ -5,7 +5,7 @@ work — technical plan §3.
 
 | Service | Responsibility | Plan reference |
 |---|---|---|
-| `ingestion/` | Capture intake, face blur, dedupe, validation | §2, §8 |
+| `ingestion/` | Capture intake, dedupe, validation | §2, §8 |
 | `quantity-ml/` | Per-trade CV models, confidence, abstention | §5 |
 | `reconciliation/` | quantity ⋈ hours ⋈ bid rate → productivity factor | §2 |
 | `alerting/` | Drift detection, correlated-condition mining | §2 |

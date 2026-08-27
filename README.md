@@ -22,7 +22,7 @@ apps/              user-facing applications
   mobile/            React Native capture app for foremen
   dashboard/         PM/ops web dashboard
 services/          backend services
-  ingestion/         capture intake, face blur, dedupe
+  ingestion/         capture intake, dedupe
   quantity-ml/       Python — CV models, confidence, abstention
   reconciliation/    quantity + hours + bid rate → productivity factor
   alerting/          drift detection, correlated conditions
@@ -39,7 +39,7 @@ The layout follows technical plan §10. `docs/` stays alongside the code as the
 planning record.
 
 **Every directory is a stub.** Each README states what that piece will own and
-which constraints bind it — face blur before persistent storage, no worker-level
+which constraints bind it — no worker-level
 aggregation anywhere in the schema, Canadian residency, simulated data barred from
 measurement. Writing those down before the code exists is the point: they are
 contractual commitments, and they are cheaper to honour by design than to retrofit.

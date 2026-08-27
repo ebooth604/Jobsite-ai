@@ -128,7 +128,7 @@ Quebec is deferred despite ~715 ICP firms: it needs French-language product and 
 
 *August 2026*
 
-**Decision.** The data model has no individual productivity metric. Not hidden, not permission-gated: absent. The unit of analysis is the scope item and the crew, never the person. Faces are blurred at ingest before storage, with the original discarded. Canadian data residency by default.
+**Decision.** The data model has no individual productivity metric. Not hidden, not permission-gated: absent. The unit of analysis is the scope item and the crew, never the person. Canadian data residency by default.
 
 **Why.** Jobsite photos contain faces, which is personal information under BC's PIPA, PIPEDA federally, and Quebec's stricter Law 25. Canadian construction is heavily unionized. A product that reads to the building trades as worker surveillance is dead on arrival regardless of its legal footing — and deservedly so.
 
@@ -171,3 +171,31 @@ A fourth item is not a risk but a constraint: the market size in §6 caps the ou
 **The honest counterweight.** This is simultaneously the sharpest reason to buy and the sharpest way the plan fails. If BC uptake disappoints — subs use the regime rarely, or the regulations make it less accessible than expected — the evidence package reverts to an ordinary change-order tool with non-urgent value. Survivable, because the productivity half stands alone and the national thesis survives a weak BC rollout. But it costs the wedge.
 
 **What would reverse it.** Two lawyer conversations in the first 60 days, one BC and one Ontario: what does a submission actually contain, how often do subs really use the regime, and what would make our export useful rather than decorative. Cheap, and it happens before anything is built on the assumption.
+
+---
+
+## 12. No face redaction, for now
+
+*August 2026*
+
+**Decision.** Photographs are stored and transmitted as they arrive. There is no
+blur pass, on the device or at ingest, and no `face_blur_status` on a capture.
+The privacy commitments that remain — no individual worker metric anywhere in the
+data model, Canadian residency, a worker notice the customer can post — are
+unchanged and still hold.
+
+**Why.** The redaction that existed lived in the browser, ahead of an upload, and
+the server took its word for it. A commitment enforced only by the client is a
+claim, not a control, and a claim in a contract that the code does not honour is
+worse than an absent feature. Rather than keep describing an enforcement that was
+not there, the description is now what the system actually does.
+
+**What this costs.** §4.3's answer to the surveillance objection is one commitment
+shorter, and this must be said plainly in any pilot conversation rather than
+discovered by a customer. It is also a live PIPA/PIPEDA question the counsel
+review in §8 now has to actually answer instead of inherit.
+
+**What would reverse it.** Building it server-side, in the ingestion service,
+where an unredacted original never reaches storage — which is what the original
+design called for and what a client-side pass was never going to deliver. That is
+the only version worth re-entering the documents.

@@ -36,7 +36,6 @@ Explicitly out of scope for v1 (do not build): 360°/drone/laser capture, full E
 ┌─────────────────────────────────────────────────┐      ┌───────────────────────┐
 │           Ingestion Service (edge)                │      │  Labour Hours Service │
 │  - dedupe, EXIF/geolocation extraction             │      │  - cost-code mapping  │
-│  - FACE BLUR at ingest, before persistent storage  │      │  - normalization      │
 │  - virus/malware scan, size/type validation        │      │  - dirty-data flags   │
 └────────────────────┬──────────────────────────────┘      └───────────┬───────────┘
                       ▼                                                 │
@@ -87,7 +86,6 @@ Stack choices below optimize for: a small team (per Business Plan §14, roughly 
 | **Datastore** | PostgreSQL (relational core: orgs, projects, scope items, productivity factors) + object storage for media (photos/video) | Productivity/reconciliation data is fundamentally relational; media is not |
 | **Search/analytics** | Defer — Postgres materialized views are sufficient at v1 scale (single-digit to low-double-digit customers) | Don't add Elasticsearch/ClickHouse until there's a proven need |
 | **Cloud provider** | **AWS `ca-central-1` (Montreal)** — see [ADR-0001](adr/0001-cloud-provider.md); founder-confirmed 2026-08-24, so this is settled rather than defaulted. Azure Canada Central was the alternative considered | Business Plan §4.3 and §8 make Canadian data residency a hard, contractual commitment, not a preference |
-| **Face blurring** | On-device (mobile) blur pass where feasible, with a mandatory server-side re-check at ingest before persistent storage — never store an unblurred original | Business Plan §4.3: "faces are blurred at ingest... with the original discarded." This must be enforced twice, because a client-side bug is not an acceptable failure mode for a privacy commitment made in the contract |
 | **Auth** | Managed auth provider (e.g. Auth0, AWS Cognito) with org/role-based access control | Don't build auth in-house at this stage |
 | **CI/CD** | GitHub Actions → containerized services on ECS/Fargate or Azure Container Apps | Keep ops overhead low for a 4-person eng team |
 | **Observability** | Sentry (errors) + a hosted metrics/log stack (Grafana Cloud or Datadog, budget-permitting) | Accuracy and abstention-rate monitoring (see §8) needs first-class telemetry from day one |
@@ -102,7 +100,7 @@ Entities (fields are illustrative, not exhaustive):
 - **Organization** — the subcontractor customer. `id, legal_name, province, trades[], data_region`
 - **Project** — a jobsite. `id, org_id, name, address, geolocation, status, start_date`
 - **ScopeItem** — a bid line item. `id, project_id, trade, description, unit_of_measure, bid_quantity, bid_hours, budgeted_units_per_hour`
-- **Capture** — a photo or video. `id, project_id, area, captured_at, captured_by (foreman user id — used only as an audit/provenance field, never surfaced as a performance metric), geolocation, media_ref, face_blur_status, origin (field | self_measured | simulated — set at ingest, never inferred later; this is what makes the §11 leak test enforceable)`
+- **Capture** — a photo or video. `id, project_id, area, captured_at, captured_by (foreman user id — used only as an audit/provenance field, never surfaced as a performance metric), geolocation, media_ref, origin (field | self_measured | simulated — set at ingest, never inferred later; this is what makes the §11 leak test enforceable)`
 - **QuantityEstimate** — model output. `id, capture_id, scope_item_id, estimated_quantity, confidence, abstained (bool), model_version`
 - **Correction** — foreman edit of an estimate. `id, quantity_estimate_id, corrected_quantity, corrected_by, corrected_at` — **this is the training signal**, and its weekly count per project is the core quality metric (Business Plan §4.4)
 - **LabourHoursRecord** — from timekeeping integration. `id, project_id, scope_item_id (mapped via cost code), date, hours, source_system, normalization_flags`
@@ -167,7 +165,6 @@ Build connectors as pluggable adapters against a common internal `LabourHoursRec
 
 These are contractual commitments in the business plan (§4.3), not aspirational goals. Treat every item below as a launch blocker for its relevant milestone, not a follow-up:
 
-- [ ] Face blurring runs before any image reaches persistent storage; unblurred originals are never written to disk/object storage, even transiently beyond the blur step. Log blur-pass success/failure per capture (`face_blur_status`) and alert on failures.
 - [ ] All media and derived data stored in a Canadian cloud region; verify this contractually and technically (bucket/region config, not just provider default).
 - [ ] No individual-worker productivity view exists anywhere in the schema, API, or UI — confirm via a code-level audit before each release, not just a design review.
 - [ ] Role-based access control enforced at the API layer (not just hidden in the UI).
@@ -194,7 +191,7 @@ sitewire/
 │   ├── mobile/              # React Native capture app
 │   └── dashboard/           # PM/ops web dashboard
 ├── services/
-│   ├── ingestion/           # capture intake, face blur, dedupe
+│   ├── ingestion/           # capture intake, dedupe
 │   ├── quantity-ml/         # Python — CV models, inference API
 │   ├── reconciliation/      # quantity + hours + bid → productivity factor
 │   ├── alerting/            # drift detection engine
@@ -225,7 +222,7 @@ sitewire/
 
 | Quarter | Business Plan milestone | Engineering breakdown |
 |---|---|---|
-| **Q1** | Electrical rough-in model at ±15%; mobile capture w/ face blur; Canadian infra; Procore photo sync; 3 design partners live | Stand up Canadian-region infra + CI/CD; build mobile capture app MVP (capture, geotag, upload, offline queue); build ingestion service with face-blur enforcement; train/evaluate electrical quantity model v0; build Procore photo-sync adapter; basic PM dashboard (raw captures + manual quantity entry as fallback) |
+| **Q1** | Electrical rough-in model at ±15%; mobile capture; Canadian infra; Procore photo sync; 3 design partners live | Stand up Canadian-region infra + CI/CD; build mobile capture app MVP (capture, geotag, upload, offline queue); train/evaluate electrical quantity model v0; build Procore photo-sync adapter; basic PM dashboard (raw captures + manual quantity entry as fallback) |
 | **Q2** | Labour-hours join; productivity dashboard; auto daily reports; 6 design partners; ±10% accuracy | Build Jonas/Rhumbix adapters + cost-code normalization layer; build reconciliation service; productivity-factor dashboard; auto-drafted daily report generator from captures; iterate electrical model to ±10%; instrument corrections-per-week |
 | **Q3** | Evidence packages incl. adjudication export; concrete forming model; first 3 paid conversions | Build evidence-package template engine (change order + BC/Ontario-shaped adjudication export); train concrete forming model; condition-detection model/head; counsel review loop for package templates |
 | **Q4** | Alerting engine tuned on real drift events; bid-rate feedback to estimating; 6 paying customers, $220K ARR | Build/tune alerting engine (drift thresholds + correlated-condition surfacing); build bid-rate feedback view for estimators; harden multi-tenant billing/usage tracking for per-project-per-month pricing (Business Plan §10) |

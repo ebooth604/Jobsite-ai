@@ -48,7 +48,7 @@ between them is a copy, not a migration.
 
 ```
 samples/   one JSON file per sample, hand-editable
-images/    the redacted renders, and nothing else
+images/    the uploaded photos, and nothing else
 exports/   every cut you have made, each with its own dataset card
 ```
 
@@ -106,14 +106,13 @@ would accept photographs into nowhere.
 
 Sample metadata is read once at startup and held in memory, so an S3 corpus costs
 no round trips to draw a page. Images stream on demand and are served
-`immutable` — redaction is baked in before upload and nothing rewrites those
-bytes, so there is no less-redacted version a cache could be holding.
+`immutable` — nothing rewrites those bytes once written.
 
 ## The workflow
 
 | Page | What it is for |
 |---|---|
-| **Intake** | A batch of photos off a phone. Redact faces, file them against a project. Nothing else. |
+| **Intake** | A batch of photos off a phone, filed against a project. Nothing else. |
 | **Library** | Everything in the corpus, filtered by trade, source, split or status. Filters live in the URL. |
 | **Sample editor** | One photo: draw regions, record the measured quantity and how it was measured, tag conditions and hard cases, set the split. |
 | **Review queue** | What is not yet reviewed, oldest first, with what each sample is still missing. |
@@ -133,10 +132,6 @@ conventions people are asked to remember:
 - **The anchor firm calibrates, it does not headline** (§5.4b). As-builts go to
   `calibration`, which is reported alongside the headline figure and never
   blended into it.
-- **No photo enters the corpus** until its faces are mosaicked or a named person
-  declares the frame free of people. Redaction happens in the browser and the
-  redacted render is what is uploaded; the server re-checks anyway, the same way
-  the ingestion service re-checks the mobile app.
 - **Nothing measures until a second person has reviewed it.** An unreviewed
   measurement is one person's afternoon, and it will be read as ground truth six
   months from now.

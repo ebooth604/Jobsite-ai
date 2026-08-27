@@ -96,7 +96,7 @@ Step 5 is what gets us renewed. Steps 3–4 are what make us hard to replace.
 | Auto-drafted daily reports from captured media | Scheduling / P6 integration |
 | Productivity-vs-bid dashboard for PM and ops | Owner/GC-facing portal |
 | Evidence packages: change order + a BC adjudication export, shaped against Ontario practice | Automated filing to ODACC or a BC nominating authority |
-| Face blurring at ingest; Canadian data residency | Any individual worker performance metric — ever |
+| Canadian data residency | Any individual worker performance metric — ever |
 | Weekly ops digest by email | Predictive schedule simulation |
 | English only | French / Quebec localization (§11) |
 
@@ -109,7 +109,6 @@ Jobsite photos contain workers' faces. In BC that is personal information under 
 Our commitments, in the product and in the contract:
 
 - **We measure installed work, not workers.** No individual productivity metric exists in the data model. Not hidden, not gated — absent. The unit of analysis is the scope item and the crew, never the person.
-- **Faces are blurred at ingest**, before the image is stored, with the original discarded.
 - **Canadian data residency**, on Canadian cloud regions, full stop.
 - **A plain-language worker notice** the customer can post on site.
 
@@ -152,7 +151,7 @@ Ranked by what actually closes deals:
 | "My foremen won't use it." | 30 seconds, on the phone they already hold, and the daily report writes itself. If pilot capture falls below 70% of crew-days, we failed and we say so. |
 | "We already have Procore." | Procore stores your photos. It doesn't count what's in them or tell you your productivity factor. We ride on top of it. |
 | "Our GC will use this against us." | The data is yours. There is no GC-facing product, by design. |
-| "The union will call this surveillance." | No individual metrics exist in the system, faces are blurred at ingest, and here is the worker notice you can post on site. See §4.3. |
+| "The union will call this surveillance." | No individual metrics exist in the system, and here is the worker notice you can post on site. See §4.3. |
 | "Where does our data live?" | Canada. Canadian company, Canadian regions, and we'll put it in the contract. |
 | "AI can't count my conduit." | Correct, in general. It can in the two trades we've trained on — here's the accuracy report from the last four pilots. |
 
@@ -320,7 +319,7 @@ Early gross margin is deliberately poor: inference cost per project-day plus hum
 
 | Quarter | Milestone |
 |---|---|
-| **Q1** | Electrical rough-in quantity model at ±15%; mobile capture with face blurring at ingest; Canadian-region infrastructure; Procore photo sync; 3 design partners live |
+| **Q1** | Electrical rough-in quantity model at ±15%; mobile capture; Canadian-region infrastructure; Procore photo sync; 3 design partners live |
 | **Q2** | Labour-hours join (Procore/Jonas/Rhumbix); productivity dashboard; auto daily reports; 6 design partners; ±10% accuracy |
 | **Q3** | Evidence packages incl. adjudication export, shaped with counsel against Ontario practice and the final BC regulations; concrete forming model; first 3 paid conversions |
 | **Q4** | Alerting engine tuned on real drift events; bid-rate feedback to estimating; 6 paying customers, $220K ARR |
