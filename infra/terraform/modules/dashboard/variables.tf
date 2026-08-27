@@ -17,8 +17,8 @@ variable "role_name" {
   type        = string
 }
 
-variable "api_name" {
-  description = "HTTP API name. Existing resource — renaming replaces it and changes the URL."
+variable "api_url" {
+  description = "Base URL of the existing HTTP API. Not managed here — see main.tf."
   type        = string
 }
 

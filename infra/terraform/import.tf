@@ -26,11 +26,6 @@ import {
   id = "sitewireai-dashboard-role"
 }
 
-import {
-  to = module.dashboard.aws_apigatewayv2_api.app
-  id = "hbxxny65sd"
-}
-
 # The integration, route and stage are NOT imported.
 #
 # They were made by "quick create" (`create-api --target`), and the AWS provider

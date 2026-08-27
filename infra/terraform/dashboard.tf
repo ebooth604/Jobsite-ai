@@ -20,7 +20,7 @@ module "dashboard" {
   # Existing names, kept exactly. See import.tf for why.
   function_name = "sitewireai-dashboard"
   role_name     = "sitewireai-dashboard-role"
-  api_name      = "sitewireai-api"
+  api_url       = "https://hbxxny65sd.execute-api.ca-central-1.amazonaws.com"
 
   domain_table_name = module.classifier.domain_table_name
   domain_table_arn  = module.classifier.domain_table_arn

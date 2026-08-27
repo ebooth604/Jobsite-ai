@@ -6,10 +6,9 @@
 # code from before any of it, because there was no path from a commit to the
 # thing customers can reach.
 #
-# So the existing Lambda, its role and its HTTP API are **imported** rather than
-# recreated (see `import.tf`). The API id is baked into the Cognito callback
-# URLs and into every link that has been shared; replacing it would invalidate
-# both to save an import block.
+# So the existing Lambda and its role are **imported** rather than recreated
+# (see `import.tf`). The HTTP API in front of them is left alone, for reasons
+# written out at the bottom of this file.
 #
 # The photo bucket and the domain table are *not* declared here. They belong to
 # the classifier module, which created them, and a resource declared in two
@@ -122,54 +121,29 @@ resource "aws_cloudwatch_log_group" "app" {
   retention_in_days = 14
 }
 
-# ---- the door ---------------------------------------------------------------
-
-resource "aws_apigatewayv2_api" "app" {
-  name          = var.api_name
-  protocol_type = "HTTP"
-}
-
-resource "aws_apigatewayv2_integration" "app" {
-  api_id                 = aws_apigatewayv2_api.app.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.app.invoke_arn
-  payload_format_version = "2.0"
-  timeout_milliseconds   = 30000
-}
-
-resource "aws_apigatewayv2_route" "app" {
-  api_id    = aws_apigatewayv2_api.app.id
-  route_key = "$default"
-  target    = "integrations/${aws_apigatewayv2_integration.app.id}"
-}
-
-resource "aws_apigatewayv2_stage" "app" {
-  api_id      = aws_apigatewayv2_api.app.id
-  name        = "$default"
-  auto_deploy = true
-
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api.arn
-    format = jsonencode({
-      requestId = "$context.requestId"
-      ip        = "$context.identity.sourceIp"
-      method    = "$context.httpMethod"
-      path      = "$context.path"
-      status    = "$context.status"
-      latency   = "$context.responseLatency"
-    })
-  }
-}
-
-resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/apigateway/${var.name_prefix}-dashboard"
-  retention_in_days = 14
-}
-
-resource "aws_lambda_permission" "api" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.app.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
-}
+# ---- the door, which is deliberately not managed here -----------------------
+#
+# The HTTP API in front of this function is **not** a Terraform resource, and
+# that is a finding rather than an omission.
+#
+# It was made with API Gateway "quick create" (`create-api --target`). AWS
+# manages that API's $default route, integration and stage as one unit: the
+# provider refuses to import them ("was created via quick create"), and deleting
+# the route succeeds and then AWS immediately restores it. They cannot be
+# adopted and they cannot be removed piecemeal.
+#
+# The only way to bring the door under Terraform is to delete the whole API and
+# create a new one, which changes the API id. That id — `hbxxny65sd` — is
+# written into the Cognito callback URLs in auth.tf and into every link that has
+# been shared. Trading a working URL for tidier state is a bad trade, especially
+# when the API is not what was broken: it already routes $default at this
+# function, so shipping new code to the function is enough to put the milestones
+# live.
+#
+# Nothing is lost operationally. The API has one route to one integration and no
+# configuration worth versioning. If it ever needs real configuration —
+# authorizers, custom domains, throttling — that is the moment to spend the URL
+# change and adopt it properly.
+#
+# The invoke permission is likewise already in place, granted by quick create.
+# Declaring it here would collide with the existing statement id.
