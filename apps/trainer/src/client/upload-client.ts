@@ -114,6 +114,7 @@ async function uploadOne(entry: Picked): Promise<string | null> {
       mime: entry.file.type || "image/jpeg",
       width: entry.width,
       height: entry.height,
+      clientRef: el<HTMLSelectElement>("client").value,
       projectRef: el<HTMLInputElement>("project").value,
       area: el<HTMLInputElement>("area").value,
       capturedAt: el<HTMLInputElement>("captured-at").value,

@@ -8,8 +8,35 @@
 
 import type { ClassifyAllResult } from "./api.js";
 import { classifierAvailable, modelName } from "./classify.js";
-import { conditionLabel, type Photo, tradeLabel } from "./photo.js";
+import type { Client, ClientsProblem } from "./clients.js";
+import { clientLabel } from "./clients.js";
+import {
+  CONDITION_TYPES,
+  conditionLabel,
+  isHandClassified,
+  type Photo,
+  SEVERITIES,
+  TRADES,
+  tradeLabel,
+} from "./photo.js";
+import { clientForm, editorForm } from "./editor-view.js";
 import { escapeHtml, page, statTiles } from "./ui.js";
+
+/** Everything a render needs to name the client a photo belongs to. */
+export interface ClientContext {
+  clients: readonly Client[];
+  problem: ClientsProblem;
+}
+
+/** The bucket for photos with no client. Not a client — the absence of one. */
+export const UNASSIGNED = "unassigned";
+
+export function clientsProblemNote(problem: ClientsProblem): string {
+  if (!problem) return "";
+  return `<div class="note warn" style="margin-bottom:14px">
+  <strong>Client list unavailable.</strong> ${escapeHtml(problem)}
+</div>`;
+}
 
 /**
  * A photo plus the URL its image is fetched from.
@@ -19,11 +46,11 @@ import { escapeHtml, page, statTiles } from "./ui.js";
  */
 export type Displayable = Photo & { url: string };
 
-function severityClass(severity: string): string {
+export function severityClass(severity: string): string {
   return severity === "critical" ? "critical" : severity === "warning" ? "warning" : "";
 }
 
-function conditionChips(photo: Photo): string {
+export function conditionChips(photo: Photo): string {
   const conditions = photo.classification?.conditions ?? [];
   if (conditions.length === 0) return "";
   return conditions
@@ -37,7 +64,7 @@ function conditionChips(photo: Photo): string {
 }
 
 /** The banner shown when no API key is configured. */
-function keyWarning(): string {
+export function keyWarning(): string {
   if (classifierAvailable()) return "";
   return `<div class="note stop" style="margin-bottom:14px">
   <strong>No API key configured.</strong> Classification is unavailable until
@@ -143,8 +170,18 @@ ${
   });
 }
 
-export function photoView(photo: Displayable, storePath: string, photoCount: number): string {
+export function photoView(
+  photo: Displayable,
+  storePath: string,
+  photoCount: number,
+  ctx: ClientContext,
+  message = "",
+): string {
   const c = photo.classification;
+
+  const problem = message
+    ? `<div class="note stop" style="margin-bottom:14px">${escapeHtml(message)}</div>`
+    : "";
 
   const conditionRows =
     c && c.conditions.length > 0
@@ -203,14 +240,21 @@ export function photoView(photo: Displayable, storePath: string, photoCount: num
   recommendation.</p>
 </div>`;
 
+  const back = photo.clientRef
+    ? `/client/${encodeURIComponent(photo.clientRef)}`
+    : `/client/${UNASSIGNED}`;
+
   const body = `
 ${keyWarning()}
-<p><a href="/">← Library</a></p>
+${problem}
+<p><a href="${escapeHtml(back)}">← ${escapeHtml(clientLabel(ctx.clients, photo.clientRef))}</a>
+  · <a href="/library">All photos</a></p>
 
 <div class="work">
   <div class="stagewrap">
     <img src="${escapeHtml(photo.url)}" alt="" class="stage">
     <p class="field-hint">
+      ${escapeHtml(clientLabel(ctx.clients, photo.clientRef))} ·
       ${escapeHtml(photo.projectRef || "No project")} · ${escapeHtml(photo.area || "no area")}
       ${photo.capturedAt ? ` · captured ${escapeHtml(photo.capturedAt)}` : ""}
       ${photo.width > 0 ? ` · ${photo.width}×${photo.height}` : ""}
@@ -224,13 +268,17 @@ ${keyWarning()}
     <div class="savebar">
       <form method="post" action="/photo/${escapeHtml(photo.id)}/classify" style="display:inline">
         <button type="submit" class="btn primary"${classifierAvailable() ? "" : " disabled"}>
-          ${c ? "Re-classify" : "Classify"}
+          ${c ? "Re-classify with the model" : "Classify with the model"}
         </button>
       </form>
       <form method="post" action="/photo/${escapeHtml(photo.id)}/delete" style="display:inline">
         <button type="submit" class="btn danger">Delete photo</button>
       </form>
     </div>
+
+    ${editorForm(photo.id, c)}
+
+    ${clientForm(photo.id, photo.clientRef, ctx.clients)}
   </div>
 </div>`;
 
@@ -245,7 +293,18 @@ ${keyWarning()}
   });
 }
 
-export function uploadView(storePath: string, photoCount: number): string {
+export function uploadView(
+  storePath: string,
+  photoCount: number,
+  ctx: ClientContext,
+): string {
+  const clientOptions = [
+    '<option value="">— unassigned —</option>',
+    ...ctx.clients.map(
+      (c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`,
+    ),
+  ].join("");
+
   const body = `
 ${keyWarning()}
 <div class="note">
@@ -258,6 +317,17 @@ ${keyWarning()}
 <div class="panel" style="margin-top:16px">
   <h2 style="margin-top:0">Batch details</h2>
   <p class="field-hint" style="margin-top:-4px">Applied to every photo in this batch.</p>
+
+  ${clientsProblemNote(ctx.problem)}
+
+  <div class="field">
+    <label for="client">Client</label>
+    <select id="client">${clientOptions}</select>
+    <p class="field-hint">
+      Every photo in this batch is filed against this client. Leave it unassigned and
+      file them later from each photo's own page.
+    </p>
+  </div>
 
   <div class="row">
     <div class="field">

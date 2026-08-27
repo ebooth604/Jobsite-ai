@@ -19,6 +19,7 @@ import { route } from "./router.js";
 interface ApiGatewayEvent {
   requestContext?: { http?: { method?: string; path?: string } };
   rawPath?: string;
+  rawQueryString?: string;
   headers?: Record<string, string | undefined>;
   body?: string | null;
   isBase64Encoded?: boolean;
@@ -124,7 +125,7 @@ export async function handler(event: ApiGatewayEvent): Promise<ApiGatewayResult>
     ? Buffer.from(event.body ?? "", "base64").toString("utf8")
     : (event.body ?? "");
 
-  const result = await route({ method, path, body });
+  const result = await route({ method, path, body, query: event.rawQueryString ?? "" });
 
   return {
     statusCode: result.status,

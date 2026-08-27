@@ -59,6 +59,21 @@ export interface ConditionTag {
  * when" is the question worth being able to answer later — particularly after a
  * model swap changes the character of the answers.
  */
+/**
+ * What `Classification.model` says when a person wrote it rather than a model.
+ *
+ * The same field carries both because the question a reader has is the same one
+ * either way — who said this — and splitting it into `model` plus an
+ * `authoredBy` would let the two disagree. Hand-written classifications keep
+ * `confidence` at zero: a person is not 0.87 sure, and a number in that box
+ * would be read as a model score.
+ */
+export const HAND_CLASSIFIED = "hand-classified";
+
+export function isHandClassified(c: Classification | null): boolean {
+  return c?.model === HAND_CLASSIFIED || c?.model === "hand-labelled (pre-rewrite)";
+}
+
 export interface Classification {
   trade: string;
   scopeDescription: string;
@@ -78,6 +93,13 @@ export interface Photo {
   imageFile: string;
   width: number;
   height: number;
+
+  /**
+   * The org this photo belongs to — a `clientRef` from the product's tenant
+   * store, not a name typed here. Empty means unassigned, which is a real and
+   * expected state: every photo uploaded before clients existed is one.
+   */
+  clientRef: string;
 
   projectRef: string;
   area: string;
@@ -155,6 +177,7 @@ export function parsePhoto(raw: unknown): Photo | null {
     imageFile,
     width: num(r.width) || 0,
     height: num(r.height) || 0,
+    clientRef: str(r.clientRef),
     projectRef: str(r.projectRef),
     area: str(r.area),
     capturedAt: str(r.capturedAt),

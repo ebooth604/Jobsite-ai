@@ -8,7 +8,15 @@
  */
 
 import { classify, classifierAvailable, explainError } from "./classify.js";
-import type { Photo } from "./photo.js";
+import {
+  type Classification,
+  CONDITION_TYPES,
+  HAND_CLASSIFIED,
+  isSeverity,
+  type Photo,
+  type Severity,
+  TRADES,
+} from "./photo.js";
 import {
   deletePhoto,
   extensionFor,
@@ -85,6 +93,7 @@ export async function createPhoto(raw: string): Promise<ApiResult> {
     imageFile,
     width: num(parsed.width),
     height: num(parsed.height),
+    clientRef: str(parsed.clientRef).slice(0, 100),
     projectRef: str(parsed.projectRef).slice(0, 200),
     area: str(parsed.area).slice(0, 200),
     capturedAt: str(parsed.capturedAt).slice(0, 40),
@@ -153,7 +162,7 @@ const BATCH_LIMIT = 20;
  * burst of twenty parallel image requests is the reliable way to get throttled
  * halfway through and leave the batch in a partial state anyway.
  */
-export async function classifyAll(): Promise<ClassifyAllResult> {
+export async function classifyAll(clientRef?: string): Promise<ClassifyAllResult> {
   if (!classifierAvailable()) {
     return {
       classified: 0,
@@ -163,7 +172,9 @@ export async function classifyAll(): Promise<ClassifyAllResult> {
     };
   }
 
-  const pending = (await listPhotos()).filter((p) => !p.classification);
+  const pending = (await listPhotos()).filter(
+    (p) => !p.classification && (clientRef === undefined || p.clientRef === clientRef),
+  );
   const batch = pending.slice(0, BATCH_LIMIT);
 
   let classified = 0;
@@ -199,6 +210,81 @@ export async function classifyAll(): Promise<ClassifyAllResult> {
     remaining: Math.max(0, pending.length - batch.length),
     errors,
   };
+}
+
+/**
+ * Writes a classification a person typed.
+ *
+ * It lands in the same field the model writes to, and is read by the same code
+ * downstream, because a reading is a reading — what differs is who made it, and
+ * `model` records that. Nothing here is merged with an existing classification:
+ * the form is rendered pre-filled from whatever is stored, so a save is the whole
+ * of the person's intent and a half-applied edit is not a state worth inventing.
+ *
+ * Unknown trades and unknown condition types are dropped rather than stored. The
+ * vocabulary is shared with the dashboard and the alerting service (see
+ * `photo.ts`), and a value only this app understands would be a bug that surfaces
+ * two services away.
+ */
+export async function saveClassification(
+  id: string,
+  form: URLSearchParams,
+): Promise<ApiResult> {
+  const photo = await getPhoto(id);
+  if (!photo) return { status: 404, body: { error: "No such photo." } };
+
+  const trade = str(form.get("trade"));
+  if (trade && !TRADES.some((t) => t.id === trade)) {
+    return { status: 400, body: { error: `Unknown trade: ${trade}` } };
+  }
+
+  const conditions = CONDITION_TYPES.flatMap((type) => {
+    if (form.get(`condition.${type.id}`) !== "on") return [];
+    const severity = str(form.get(`severity.${type.id}`));
+    return [
+      {
+        type: type.id,
+        severity: (isSeverity(severity) ? severity : "warning") as Severity,
+        note: str(form.get(`note.${type.id}`)).slice(0, 500),
+      },
+    ];
+  });
+
+  const classification: Classification = {
+    trade,
+    scopeDescription: str(form.get("scopeDescription")).slice(0, 500),
+    conditions,
+    recommendation: str(form.get("recommendation")).slice(0, 2000),
+    // A person is not a fraction sure. Zero keeps the confidence box empty
+    // rather than putting a number there that would be read as a model score.
+    confidence: 0,
+    reading: str(form.get("reading")).slice(0, 4000),
+    model: HAND_CLASSIFIED,
+    classifiedAt: new Date().toISOString(),
+  };
+
+  await putPhoto({ ...photo, classification, updatedAt: new Date().toISOString() });
+  return { status: 200, body: { ok: true } };
+}
+
+/**
+ * Files a photo against a client, or takes it out of one.
+ *
+ * The ref is not validated against the live client list on purpose: the list can
+ * be unreachable (see `clients.ts`) and refusing to file a photo because AWS is
+ * having a moment would be the wrong failure. A ref that does not resolve renders
+ * as itself, which looks wrong, which is the point.
+ */
+export async function assignClient(id: string, clientRef: string): Promise<ApiResult> {
+  const photo = await getPhoto(id);
+  if (!photo) return { status: 404, body: { error: "No such photo." } };
+
+  await putPhoto({
+    ...photo,
+    clientRef: clientRef.slice(0, 100),
+    updatedAt: new Date().toISOString(),
+  });
+  return { status: 200, body: { ok: true } };
 }
 
 export async function removePhoto(id: string): Promise<ApiResult> {

@@ -28,7 +28,8 @@ export const escapeHtml = (value: string): string =>
 export const jsonBlock = (value: unknown): string => JSON.stringify(value).replace(/</g, "\\u003c");
 
 const NAV: readonly { href: string; label: string }[] = [
-  { href: "/", label: "Library" },
+  { href: "/", label: "Clients" },
+  { href: "/library", label: "All photos" },
   { href: "/upload", label: "Upload" },
 ];
 

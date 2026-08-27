@@ -7,5 +7,8 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/client/**"],
-  "references": [{ "path": "./tsconfig.client.json" }]
+  "references": [
+    { "path": "../../packages/db" },
+    { "path": "./tsconfig.client.json" }
+  ]
 }

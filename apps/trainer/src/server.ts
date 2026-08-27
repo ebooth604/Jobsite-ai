@@ -49,7 +49,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
-  const result = await route({ method: req.method ?? "GET", path, body });
+  const result = await route({
+    method: req.method ?? "GET",
+    path,
+    body,
+    query: url.search.slice(1),
+  });
   res.writeHead(result.status, result.headers);
   res.end(result.isBase64 ? Buffer.from(result.body, "base64") : result.body);
 }
