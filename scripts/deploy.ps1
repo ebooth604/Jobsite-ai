@@ -7,22 +7,14 @@
 # `&&` is not a statement separator in Windows PowerShell 5.1 and `eval "$(...)"`
 # is bash — pasting the Unix form produces a parser error, not a deployment.
 #
-#   powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
+# The path is derived from this file's own location, so it runs from anywhere:
 #
-# Safe to re-run. Terraform converges, and the secret script overwrites the same
-# four values.
+#   powershell -ExecutionPolicy Bypass -File C:\CLaud\Jobsite-ai\scripts\deploy.ps1
 #
-# **One-time step before the first run.** The API's integration, route and stage
-# were made by "quick create" and the AWS provider cannot import those, so they
-# have to be deleted once and let Terraform recreate them. The API itself keeps
-# its id — `hbxxny65sd`, which is written into the Cognito callback URLs and
-# every shared link. Route first; it holds a reference to the integration:
-#
-#   aws apigatewayv2 delete-route       --api-id hbxxny65sd --route-id 0pqflu8       --profile sitewire --region ca-central-1
-#   aws apigatewayv2 delete-integration --api-id hbxxny65sd --integration-id 82wiwmm --profile sitewire --region ca-central-1
-#   aws apigatewayv2 delete-stage       --api-id hbxxny65sd --stage-name '$default'  --profile sitewire --region ca-central-1
-#
-# The dashboard URL is down between that third command and the apply below.
+# Safe to re-run, and no step here takes the site down. Terraform converges, the
+# secret script overwrites the same four values, and the HTTP API is not touched
+# at all — see the note at the bottom of modules/dashboard/main.tf for why it is
+# deliberately not managed.
 
 $ErrorActionPreference = 'Stop'
 
