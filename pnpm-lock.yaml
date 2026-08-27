@@ -26,6 +26,12 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1118.0
         version: 3.1118.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.1118.0
+        version: 3.1118.0
+      '@sitewireai/classify':
+        specifier: workspace:*
+        version: link:../../packages/classify
       '@sitewireai/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -45,9 +51,6 @@ importers:
 
   apps/trainer:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.120.0
-        version: 0.120.0(zod@4.4.3)
       '@aws-sdk/client-dynamodb':
         specifier: ^3.1118.0
         version: 3.1118.0
@@ -63,9 +66,22 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1118.0
         version: 3.1118.0
+      '@sitewireai/classify':
+        specifier: workspace:*
+        version: link:../../packages/classify
       '@sitewireai/db':
         specifier: workspace:*
         version: link:../../packages/db
+    devDependencies:
+      '@types/node':
+        specifier: ^26.2.0
+        version: 26.2.0
+
+  packages/classify:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.120.0
+        version: 0.120.0(zod@4.4.3)
       zod:
         specifier: ^4.4.3
         version: 4.4.3

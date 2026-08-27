@@ -28,6 +28,7 @@ import {
 import { handleAdmin } from "./admin-routes.js";
 import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
+import { handleClassifications } from "./classification-routes.js";
 import { isAdminWithoutTenant, resolveTenant, wantsSpecificOrg } from "./tenant.js";
 
 type Mode = "dev" | "rc";
@@ -193,6 +194,24 @@ const server = createServer((req, res) => {
       });
       res.end(welcome.body);
       return;
+    }
+
+    if (path === "/captures" || path.startsWith("/captures/")) {
+      const chunks: Buffer[] = [];
+      req.on("data", (c: Buffer) => chunks.push(c));
+      await new Promise((done) => req.on("end", done));
+      const result = await handleClassifications(
+        path,
+        req.method ?? "GET",
+        rawQuery,
+        Buffer.concat(chunks).toString("utf8"),
+        orgId,
+      );
+      if (result) {
+        res.writeHead(result.status, result.headers);
+        res.end(result.body);
+        return;
+      }
     }
 
     const withQuery = await renderWithQuery(req.url ?? "/", orgId);

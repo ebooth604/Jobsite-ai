@@ -21,6 +21,7 @@
  */
 
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { type Classification, classify } from "@sitewireai/classify";
 import * as db from "@sitewireai/db";
 import type { ScopeItem } from "./types.js";
 
@@ -147,12 +148,26 @@ export async function saveCapture(
     }),
   );
 
-  // Classification is best-effort. A model outage must not cost the user their
-  // photo — the capture is stored either way and can be classified later.
-  let classification: unknown = null;
+  // **This is where the trainer runs.** Every capture — a client's from the
+  // capture console, an admin's from the admin console — goes through the same
+  // classifier the trainer uses and produces the same `Classification` shape, so
+  // the reading that comes back can be adjusted afterwards rather than only read.
+  //
+  // Best-effort, deliberately: a model outage must not cost someone their photo.
+  // The capture is stored either way and shows as unclassified, which the
+  // adjustment surface already knows how to render.
+  //
+  // `describeCapture` used to run here and no longer does. It answers a different
+  // question — which scope item and area to put in the form — and it still does
+  // that, live, from the console. What is stored on the row is a classification.
+  let classification: Classification | null = null;
   try {
-    const { describeCapture } = await import("./ai.js");
-    classification = await describeCapture(upload.image, scopeItems);
+    classification = await classify({
+      imageBase64: upload.image,
+      mediaType: "image/jpeg",
+      projectRef: scopeItem.description,
+      area: upload.area || "",
+    });
   } catch {
     classification = null;
   }

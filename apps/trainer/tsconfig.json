@@ -8,6 +8,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/client/**"],
   "references": [
+    { "path": "../../packages/classify" },
     { "path": "../../packages/db" },
     { "path": "./tsconfig.client.json" }
   ]

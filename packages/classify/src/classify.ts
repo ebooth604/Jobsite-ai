@@ -20,7 +20,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import { CONDITION_TYPES, type Classification, SEVERITIES, TRADES } from "./photo.js";
+import { CONDITION_TYPES, type Classification, SEVERITIES, TRADES } from "./domain.js";
 
 /**
  * Sonnet rather than Opus: this runs over every photo on a site, so per-photo

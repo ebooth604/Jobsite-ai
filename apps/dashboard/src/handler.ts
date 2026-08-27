@@ -19,6 +19,7 @@ import {
 import { handleAdmin } from "./admin-routes.js";
 import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
+import { handleClassifications } from "./classification-routes.js";
 import { isAdminWithoutTenant, resolveTenant, wantsSpecificOrg } from "./tenant.js";
 
 interface FunctionUrlEvent {
@@ -48,14 +49,22 @@ interface FunctionUrlResult {
  *
  * `img-src` allows `blob:` and `data:` because the editor renders local files the
  * user picked and previews the redacted result as a data URL. Neither is a remote
- * origin — `connect-src 'none'` still means the page cannot send anything anywhere,
+ * origin — `connect-src` still means the page cannot send anything anywhere,
  * which is the property that matters for unredacted photos.
+ *
+ * The S3 origin is allowed for images only, and only so the classification pages
+ * can display a stored capture from a presigned link. Proxying those bytes
+ * through the function instead would hit the 6 MB response cap on exactly the
+ * large photographs most worth looking at. It widens `img-src` and nothing else:
+ * a page still cannot *send* anywhere, which is the property that matters.
  */
+const MEDIA_ORIGIN = "https://*.s3.ca-central-1.amazonaws.com";
+
 const CSP = [
   "default-src 'none'",
   "script-src 'self'",
   "style-src 'unsafe-inline'",
-  "img-src 'self' blob: data:",
+  `img-src 'self' blob: data: ${MEDIA_ORIGIN}`,
   // 'self' so the page can reach /ai, and nothing else. A photo still has
   // nowhere to go: no other origin is reachable from this document.
   "connect-src 'self'",
@@ -200,6 +209,32 @@ export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResul
       },
       body: welcome.body,
     };
+  }
+
+  if (path === "/captures" || path.startsWith("/captures/")) {
+    const raw = event.isBase64Encoded
+      ? Buffer.from(event.body ?? "", "base64").toString("utf8")
+      : (event.body ?? "");
+    const result = await handleClassifications(
+      path,
+      event.requestContext?.http?.method ?? "GET",
+      rawQuery,
+      raw,
+      orgId,
+    );
+    if (result) {
+      return {
+        statusCode: result.status,
+        headers: {
+          ...result.headers,
+          "strict-transport-security": HSTS,
+          "content-security-policy": CSP,
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "no-referrer",
+        },
+        body: result.body,
+      };
+    }
   }
 
   const POSTS: Record<string, typeof handleAssist> = {

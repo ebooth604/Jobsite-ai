@@ -25,7 +25,7 @@ import {
   removePhoto,
   saveClassification,
 } from "./api.js";
-import { classifierAvailable, modelName } from "./classify.js";
+import { classifierAvailable, modelName } from "@sitewireai/classify";
 import { clientsView, clientView } from "./client-views.js";
 import { clientLabel, findClient, loadClients } from "./clients.js";
 import type { Photo } from "./photo.js";

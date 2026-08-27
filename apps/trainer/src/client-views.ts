@@ -8,7 +8,7 @@
  */
 
 import type { ClassifyAllResult } from "./api.js";
-import { classifierAvailable, modelName } from "./classify.js";
+import { classifierAvailable, modelName } from "@sitewireai/classify";
 import type { Client, ClientsProblem } from "./clients.js";
 import { clientLabel } from "./clients.js";
 import { isHandClassified, type Photo, tradeLabel } from "./photo.js";

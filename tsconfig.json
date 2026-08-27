@@ -2,13 +2,16 @@
   "files": [],
   "references": [
     {
-      "path": "packages/shared-types"
-    },
-    {
       "path": "apps/dashboard"
     },
     {
       "path": "apps/trainer"
+    },
+    {
+      "path": "packages/classify"
+    },
+    {
+      "path": "packages/shared-types"
     }
   ]
 }

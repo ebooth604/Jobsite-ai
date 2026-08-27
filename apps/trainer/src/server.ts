@@ -8,7 +8,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { classifierAvailable, modelName } from "./classify.js";
+import { classifierAvailable, modelName } from "@sitewireai/classify";
 import { route } from "./router.js";
 import { openStore, storeLocation } from "./store.js";
 

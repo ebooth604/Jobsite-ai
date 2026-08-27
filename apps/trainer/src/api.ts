@@ -7,7 +7,7 @@
  * amount of policy left in this layer is "is this actually an image".
  */
 
-import { classify, classifierAvailable, explainError } from "./classify.js";
+import { classify, classifierAvailable, explainError } from "@sitewireai/classify";
 import {
   type Classification,
   CONDITION_TYPES,
