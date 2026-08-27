@@ -29,6 +29,7 @@ import { handleAdmin } from "./admin-routes.js";
 import { parseCookies, SESSION_COOKIE, verifySession } from "./auth.js";
 import { beginLogin, beginLogout, completeLogin } from "./auth-routes.js";
 import { handleClassifications } from "./classification-routes.js";
+import { CSP } from "./handler.js";
 import { isAdminWithoutTenant, resolveTenant, wantsSpecificOrg } from "./tenant.js";
 
 type Mode = "dev" | "rc";
@@ -191,6 +192,7 @@ const server = createServer((req, res) => {
       res.writeHead(welcome.status, {
         "content-type": welcome.contentType,
         "cache-control": "no-store",
+        "content-security-policy": CSP,
       });
       res.end(welcome.body);
       return;
@@ -208,7 +210,10 @@ const server = createServer((req, res) => {
         orgId,
       );
       if (result) {
-        res.writeHead(result.status, result.headers);
+        // Same headers the deployed function sends. Serving a laxer policy
+        // locally is how a CSP that blocks form submission reaches production
+        // untested — which is exactly what happened to form-action.
+        res.writeHead(result.status, { ...result.headers, "content-security-policy": CSP });
         res.end(result.body);
         return;
       }
@@ -219,6 +224,7 @@ const server = createServer((req, res) => {
     res.writeHead(status, {
       "content-type": contentType,
       "cache-control": "no-store",
+      "content-security-policy": CSP,
     });
     res.end(body);
   })();

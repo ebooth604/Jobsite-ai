@@ -140,7 +140,9 @@ export async function handleClassifications(
   if (method === "POST") {
     const built = fromForm(new URLSearchParams(body));
     if ("error" in built) {
-      return redirect(`/captures/${encodeURIComponent(id)}?msg=${encodeURIComponent(built.error)}`);
+      const keep = new URLSearchParams(rawQuery);
+      keep.set("msg", built.error);
+      return redirect(`/captures/${encodeURIComponent(id)}?${keep}`);
     }
 
     // Written through `putItem` with the org as the partition key, so an
@@ -155,10 +157,13 @@ export async function handleClassifications(
       classification: built,
     });
 
-    return redirect(
-      `/captures/${encodeURIComponent(id)}?msg=${encodeURIComponent("Adjustment saved.")}`,
-    );
+    const keep = new URLSearchParams(rawQuery);
+    keep.set("msg", "Adjustment saved.");
+    return redirect(`/captures/${encodeURIComponent(id)}?${keep}`);
   }
 
-  return html(200, classificationView({ ...capture, imageUrl: await imageUrl(capture.imageKey) }, message));
+  return html(
+    200,
+    classificationView({ ...capture, imageUrl: await imageUrl(capture.imageKey) }, message, rawQuery),
+  );
 }

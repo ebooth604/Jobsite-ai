@@ -167,7 +167,18 @@ function conditionField(
 }
 
 /** One capture: the photo, the reading on file, and the form that replaces it. */
-export function classificationView(capture: CaptureWithImage, message = ""): string {
+/**
+ * `query` is carried onto the form action so a POST lands on the same tenant the
+ * page was rendered for. In production that is redundant — the org comes from
+ * the session — but in dev the `?org=` switcher is the only thing naming the
+ * tenant, and a form that drops it posts into whichever org happens to sort
+ * first. That looks exactly like a broken save, and cost an afternoon once.
+ */
+export function classificationView(
+  capture: CaptureWithImage,
+  message = "",
+  query = "",
+): string {
   const c = asClassification(capture.classification);
   const byType = new Map((c?.conditions ?? []).map((t) => [t.type, t]));
 
@@ -206,7 +217,7 @@ ${note}
     ${provenance}
   </div>
 
-  <form method="post" action="/captures/${escapeHtml(capture.id)}">
+  <form method="post" action="/captures/${escapeHtml(capture.id)}${query ? `?${escapeHtml(query)}` : ""}">
     <h2 style="margin-top:0">Adjust the classification</h2>
 
     <label>Trade

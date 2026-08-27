@@ -61,7 +61,7 @@ interface FunctionUrlResult {
  */
 const MEDIA_ORIGIN = "https://*.s3.ca-central-1.amazonaws.com";
 
-const CSP = [
+export const CSP = [
   "default-src 'none'",
   "script-src 'self'",
   "style-src 'unsafe-inline'",
@@ -70,7 +70,13 @@ const CSP = [
   // nowhere to go: no other origin is reachable from this document.
   "connect-src 'self'",
   "base-uri 'none'",
-  "form-action 'none'",
+  // `'self'`, not `'none'`. This said `'none'` when every page here was
+  // read-only, and it silently broke the first server-rendered form to ship:
+  // the classification adjustment posts back to this origin, and the browser
+  // refused the submission with nothing shown to the user and nothing logged on
+  // the server. `'self'` still blocks a submission to any other origin, which is
+  // the property actually worth having.
+  "form-action 'self'",
   "frame-ancestors 'none'",
 ].join("; ");
 
