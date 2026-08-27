@@ -37,3 +37,13 @@ output "role_name" {
   description = "Execution role name, so callers can attach further grants to it."
   value       = aws_iam_role.lambda.name
 }
+
+output "domain_table_arn" {
+  description = "ARN of the domain table, so another module can be granted access without redeclaring it."
+  value       = aws_dynamodb_table.domain.arn
+}
+
+output "bucket_arn" {
+  description = "ARN of the photo bucket, for grants made outside this module."
+  value       = aws_s3_bucket.photos.arn
+}
