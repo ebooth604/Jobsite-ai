@@ -1,10 +1,21 @@
 # Client authentication.
 #
-# The dashboard is not yet Terraform-managed — it was deployed by hand and lives
-# at its own API Gateway URL — so both that origin and the local dev server are
-# registered as callbacks. Cognito matches these exactly, including scheme and
-# path, so a trailing slash or a missing `http://` is the usual cause of
-# `redirect_mismatch`.
+# **Every origin the site can be reached from has to be listed here.**
+#
+# The app builds `redirect_uri` from the Host header of the request, so someone
+# arriving at sitewireai.com is sent to Cognito asking to return to
+# sitewireai.com — and Cognito refuses any URI it was not given in advance, with
+# the deliberately vague "An error was encountered with the requested page".
+# Nothing appears in the application's logs, because the request never reaches
+# the application.
+#
+# That is exactly how sign-in broke on 2026-08-27. The list held the API Gateway
+# origin, sign-in was tested there and worked, and the custom domain — the one an
+# actual visitor types — was missing. Testing the URL you deployed rather than
+# the URL people use is what made it invisible.
+#
+# Apex and `www` are both listed because both resolve. Cognito matches the string
+# exactly: scheme, host and path, with a trailing slash counting as a difference.
 
 module "auth" {
   source = "./modules/auth"
@@ -14,11 +25,15 @@ module "auth" {
   callback_urls = [
     "http://localhost:4173/auth/callback",
     "https://hbxxny65sd.execute-api.ca-central-1.amazonaws.com/auth/callback",
+    "https://sitewireai.com/auth/callback",
+    "https://www.sitewireai.com/auth/callback",
   ]
 
   logout_urls = [
     "http://localhost:4173/",
     "https://hbxxny65sd.execute-api.ca-central-1.amazonaws.com/",
+    "https://sitewireai.com/",
+    "https://www.sitewireai.com/",
   ]
 }
 
