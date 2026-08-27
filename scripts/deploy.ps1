@@ -33,16 +33,32 @@ if (-not (Test-Path $Terraform)) {
 # Terraform's AWS provider cannot read this profile's `login_session` credentials
 # directly — it reports "No valid credential sources found". Exporting them into
 # the environment is the documented bridge. The copy is a frozen snapshot that
-# expires in ~15 minutes, which is ample for an apply and useless for a server.
+# expires in ~15 minutes, and is useless for a long-running server.
+#
+# **It is bridged twice: here, and again immediately before the apply.**
+#
+# "Ample for an apply" is what the previous version of this comment claimed, and
+# it was wrong. Building both bundles takes minutes — an npm install and two
+# zips each — and on 2026-08-27 the snapshot expired *during* the apply. The
+# result was worse than a clean failure: Terraform had already written the new
+# `source_code_hash` into state but the `UpdateFunctionCode` call died on
+# `ExpiredTokenException`, so state recorded code that was never uploaded. The
+# next plan reported no changes and the deployed function kept serving the old
+# bundle, silently. State could not be saved either, and the lock was left held.
+#
+# Re-bridging costs one CLI call and removes the window entirely.
+
+function Set-AwsCredentials {
+  $c = & aws configure export-credentials --profile $Profile --format process | ConvertFrom-Json
+  if (-not $c.AccessKeyId) { Write-Error "Could not export credentials. Run: aws login --profile $Profile" }
+  $env:AWS_ACCESS_KEY_ID     = $c.AccessKeyId
+  $env:AWS_SECRET_ACCESS_KEY = $c.SecretAccessKey
+  $env:AWS_SESSION_TOKEN     = $c.SessionToken
+  $env:AWS_REGION            = $Region
+}
 
 Write-Host '- bridging credentials' -ForegroundColor Cyan
-$creds = & aws configure export-credentials --profile $Profile --format process | ConvertFrom-Json
-if (-not $creds.AccessKeyId) { Write-Error "Could not export credentials. Run: aws login --profile $Profile" }
-
-$env:AWS_ACCESS_KEY_ID     = $creds.AccessKeyId
-$env:AWS_SECRET_ACCESS_KEY = $creds.SecretAccessKey
-$env:AWS_SESSION_TOKEN     = $creds.SessionToken
-$env:AWS_REGION            = $Region
+Set-AwsCredentials
 
 # --- bundles ----------------------------------------------------------------
 #
@@ -57,6 +73,12 @@ if ($LASTEXITCODE -ne 0) { Write-Error 'building the classifier bundle failed' }
 if ($LASTEXITCODE -ne 0) { Write-Error 'building the dashboard bundle failed' }
 
 # --- apply ------------------------------------------------------------------
+
+# Fresh credentials, because the bundles above take minutes to build and the
+# snapshot from the top of this script may be most of the way through its life.
+# See the note in the credentials section for what expiring mid-apply cost.
+Write-Host '- refreshing credentials' -ForegroundColor Cyan
+Set-AwsCredentials
 
 # Arguments are quoted and passed as an array, not written inline.
 #

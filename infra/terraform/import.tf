@@ -41,3 +41,15 @@ import {
 # it is a deliberate step in deploy.ps1 rather than something that happens
 # quietly. Order matters: a route holds a reference to its integration, so the
 # route goes first or the integration delete is refused.
+
+# The log group, created by Lambda itself on the function's first invocation.
+#
+# AWS makes `/aws/lambda/<function>` implicitly the first time a function runs,
+# so declaring it in Terraform without this fails with
+# ResourceAlreadyExistsException. Importing it is also what puts a retention
+# policy on it: an implicitly created group keeps logs forever, which is a slow
+# bill rather than a broken deploy, and therefore easy to miss.
+import {
+  to = module.dashboard.aws_cloudwatch_log_group.app
+  id = "/aws/lambda/sitewireai-dashboard"
+}
