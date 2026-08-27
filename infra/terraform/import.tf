@@ -31,17 +31,18 @@ import {
   id = "hbxxny65sd"
 }
 
-import {
-  to = module.dashboard.aws_apigatewayv2_integration.app
-  id = "hbxxny65sd/82wiwmm"
-}
-
-import {
-  to = module.dashboard.aws_apigatewayv2_route.app
-  id = "hbxxny65sd/0pqflu8"
-}
-
-import {
-  to = module.dashboard.aws_apigatewayv2_stage.app
-  id = "hbxxny65sd/$default"
-}
+# The integration, route and stage are NOT imported.
+#
+# They were made by "quick create" (`create-api --target`), and the AWS provider
+# refuses to import resources created that way — it errors with
+# "was created via quick create" and nothing adopts them. So they are deleted
+# before the apply and Terraform makes them fresh.
+#
+# The API itself is imported and keeps its id, which is the part that matters:
+# `hbxxny65sd` is written into the Cognito callback URLs in auth.tf and into
+# every link that has been shared. Its children are replaceable; its id is not.
+#
+# Deleting them takes the URL down until the apply recreates them, which is why
+# it is a deliberate step in deploy.ps1 rather than something that happens
+# quietly. Order matters: a route holds a reference to its integration, so the
+# route goes first or the integration delete is refused.

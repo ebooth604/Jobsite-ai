@@ -1,4 +1,7 @@
-# Deploys the classifier: credential bridge, terraform apply, then the secret.
+# Deploys both functions: credential bridge, bundles, terraform apply, secret.
+#
+# This used to deploy only the classifier, which is why three milestones of
+# dashboard work sat finished in the repository and served nowhere.
 #
 # PowerShell rather than bash because that is what this machine's terminal runs.
 # `&&` is not a statement separator in Windows PowerShell 5.1 and `eval "$(...)"`
@@ -37,6 +40,18 @@ $env:AWS_SECRET_ACCESS_KEY = $creds.SecretAccessKey
 $env:AWS_SESSION_TOKEN     = $creds.SessionToken
 $env:AWS_REGION            = $Region
 
+# --- bundles ----------------------------------------------------------------
+#
+# Terraform hashes these zips, so they must exist and be current before the plan
+# runs. Building them here rather than from Terraform keeps the plan readable:
+# a plan that silently rebuilds application code is a plan you cannot trust.
+
+Write-Host '- building bundles' -ForegroundColor Cyan
+& node (Join-Path $PSScriptRoot 'build-classifier.mjs')
+if ($LASTEXITCODE -ne 0) { Write-Error 'building the classifier bundle failed' }
+& node (Join-Path $PSScriptRoot 'build-dashboard.mjs')
+if ($LASTEXITCODE -ne 0) { Write-Error 'building the dashboard bundle failed' }
+
 # --- apply ------------------------------------------------------------------
 
 # Arguments are quoted and passed as an array, not written inline.
@@ -59,6 +74,7 @@ try {
   if ($LASTEXITCODE -ne 0) { Write-Error 'terraform apply failed' }
 
   $url = & $Terraform @('output', '-raw', 'classifier_url')
+  $dashboardUrl = & $Terraform @('output', '-raw', 'dashboard_url')
 }
 finally {
   Pop-Location

@@ -8,8 +8,14 @@
  * not exist here. A temp file would work but leaves the password on disk
  * unencrypted between write and delete. The SDK keeps it in this process.
  *
- * Values come from `apps/trainer/.env` (git-ignored), so the password never has
- * to be typed into a terminal or a transcript to be used.
+ * Values come from `apps/trainer/.env` and `apps/dashboard/.env` (both
+ * git-ignored), so nothing secret has to be typed into a terminal or a
+ * transcript to be used.
+ *
+ * One secret serves both functions. The classifier reads the basic-auth pair
+ * and the API key; the dashboard reads the API key and the Cognito client
+ * secret. Splitting them into two secrets would mean two rotations to keep in
+ * step for the one value they share.
  *
  * Terraform creates the empty secret; this fills it. That split is deliberate —
  * Terraform state is a readable file, and a value passed as a resource argument
@@ -55,15 +61,18 @@ function readEnv(path) {
 }
 
 const env = readEnv(ENV_FILE);
+const dashboardEnv = readEnv(join(ROOT, "apps", "dashboard", ".env"));
 
 const username = env.SITEWIREAI_BASIC_AUTH_USER;
 const password = env.SITEWIREAI_BASIC_AUTH_PASSWORD;
 const apiKey = env.ANTHROPIC_API_KEY;
+const cognitoClientSecret = dashboardEnv.SITEWIREAI_CLIENT_SECRET;
 
 const missing = [
   !username && "SITEWIREAI_BASIC_AUTH_USER",
   !password && "SITEWIREAI_BASIC_AUTH_PASSWORD",
   !apiKey && "ANTHROPIC_API_KEY",
+  !cognitoClientSecret && "SITEWIREAI_CLIENT_SECRET (apps/dashboard/.env)",
 ].filter(Boolean);
 
 if (missing.length > 0) {
@@ -71,8 +80,14 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// Exactly these three keys — see loadSecret() in apps/trainer/src/handler.ts.
-const payload = JSON.stringify({ username, password, anthropic_api_key: apiKey });
+// Exactly these four keys — see loadSecret() in apps/trainer/src/handler.ts and
+// loadSecrets() in apps/dashboard/src/handler.ts.
+const payload = JSON.stringify({
+  username,
+  password,
+  anthropic_api_key: apiKey,
+  cognito_client_secret: cognitoClientSecret,
+});
 
 console.log(`• putting secret values into ${secretId} (${region})`);
 
@@ -97,5 +112,6 @@ console.log("✓ secret set");
 console.log(`  username: ${username}`);
 console.log("  password: (from apps/trainer/.env — not printed)");
 console.log("  anthropic_api_key: (set)");
+console.log("  cognito_client_secret: (set)");
 console.log("\nThe Lambda caches the secret per execution environment, so a change");
 console.log("takes effect as environments recycle rather than instantly.");

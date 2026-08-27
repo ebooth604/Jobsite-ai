@@ -21,16 +21,28 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 
-const USER_POOL_ID = process.env.SITEWIREAI_USER_POOL_ID ?? "";
-const CLIENT_ID = process.env.SITEWIREAI_CLIENT_ID ?? "";
-const CLIENT_SECRET = process.env.SITEWIREAI_CLIENT_SECRET ?? "";
-const LOGIN_DOMAIN = process.env.SITEWIREAI_LOGIN_DOMAIN ?? "";
+/**
+ * Read on use, not at module load.
+ *
+ * In Lambda the client secret arrives from Secrets Manager during the first
+ * request — it is deliberately not a function environment variable, where anyone
+ * with console read access could see it. A top-level `const` would capture the
+ * empty string before that read happened, and sign-in would fail for the whole
+ * life of the execution environment with nothing in the logs to explain it.
+ *
+ * Locally these come from `.env` and are set before anything imports this, so
+ * the laziness costs nothing and removes a whole class of ordering bug.
+ */
+const USER_POOL_ID = () => process.env.SITEWIREAI_USER_POOL_ID ?? "";
+const CLIENT_ID = () => process.env.SITEWIREAI_CLIENT_ID ?? "";
+const CLIENT_SECRET = () => process.env.SITEWIREAI_CLIENT_SECRET ?? "";
+const LOGIN_DOMAIN = () => process.env.SITEWIREAI_LOGIN_DOMAIN ?? "";
 
 export const SESSION_COOKIE = "sw_session";
 const STATE_COOKIE = "sw_state";
 
 export function authConfigured(): boolean {
-  return Boolean(USER_POOL_ID && CLIENT_ID && CLIENT_SECRET && LOGIN_DOMAIN);
+  return Boolean(USER_POOL_ID() && CLIENT_ID() && CLIENT_SECRET() && LOGIN_DOMAIN());
 }
 
 /**
@@ -43,9 +55,9 @@ let verifier: ReturnType<typeof CognitoJwtVerifier.create> | null = null;
 function jwtVerifier() {
   if (!verifier) {
     verifier = CognitoJwtVerifier.create({
-      userPoolId: USER_POOL_ID,
+      userPoolId: USER_POOL_ID(),
       tokenUse: "id",
-      clientId: CLIENT_ID,
+      clientId: CLIENT_ID(),
     });
   }
   return verifier;
@@ -126,17 +138,17 @@ export function stateMatches(a: string, b: string): boolean {
 export function authorizeUrl(redirectUri: string, state: string): string {
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: CLIENT_ID,
+    client_id: CLIENT_ID(),
     redirect_uri: redirectUri,
     scope: "openid email profile",
     state,
   });
-  return `https://${LOGIN_DOMAIN}/oauth2/authorize?${params}`;
+  return `https://${LOGIN_DOMAIN()}/oauth2/authorize?${params}`;
 }
 
 export function logoutUrl(returnTo: string): string {
-  const params = new URLSearchParams({ client_id: CLIENT_ID, logout_uri: returnTo });
-  return `https://${LOGIN_DOMAIN}/logout?${params}`;
+  const params = new URLSearchParams({ client_id: CLIENT_ID(), logout_uri: returnTo });
+  return `https://${LOGIN_DOMAIN()}/logout?${params}`;
 }
 
 export interface TokenSet {
@@ -156,9 +168,9 @@ export async function exchangeCode(
 ): Promise<TokenSet | { error: string }> {
   if (!authConfigured()) return { error: "Authentication is not configured on this server." };
 
-  const basic = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
+  const basic = Buffer.from(`${CLIENT_ID()}:${CLIENT_SECRET()}`).toString("base64");
 
-  const res = await fetch(`https://${LOGIN_DOMAIN}/oauth2/token`, {
+  const res = await fetch(`https://${LOGIN_DOMAIN()}/oauth2/token`, {
     method: "POST",
     headers: {
       authorization: `Basic ${basic}`,
@@ -166,7 +178,7 @@ export async function exchangeCode(
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
-      client_id: CLIENT_ID,
+      client_id: CLIENT_ID(),
       code,
       redirect_uri: redirectUri,
     }),

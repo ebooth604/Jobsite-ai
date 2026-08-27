@@ -8,6 +8,7 @@
  * architecture.
  */
 
+import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import {
   handleAssist,
   handleCaptureUpload,
@@ -104,8 +105,55 @@ const CSP = [
  */
 const HSTS = "max-age=31536000; includeSubDomains";
 
+/**
+ * Secrets, read once per execution environment and put into the environment.
+ *
+ * Two values cannot be Lambda environment variables: the Anthropic API key and
+ * the Cognito client secret. Both would then be readable by anyone with console
+ * access to the function's configuration page, which is a wider audience than
+ * either deserves. They live in Secrets Manager and are fetched on the first
+ * request instead.
+ *
+ * This is why `auth.ts` reads its configuration lazily. A module-level
+ * `const CLIENT_SECRET = process.env...` would capture the empty string before
+ * this ran, and every sign-in for the life of the execution environment would
+ * fail with nothing in the logs to say why.
+ *
+ * Cached deliberately: a Secrets Manager read per request would add latency and
+ * cost to every page view for values that change only on a deliberate rotation.
+ * The trade is that a rotation takes effect when the environment recycles.
+ */
+const SECRET_ID = process.env.SITEWIREAI_SECRET_ID ?? "";
+let secrets: SecretsManagerClient | null = null;
+let secretsLoaded = false;
+
+async function loadSecrets(): Promise<void> {
+  if (secretsLoaded || !SECRET_ID) return;
+  secretsLoaded = true;
+
+  try {
+    if (!secrets) secrets = new SecretsManagerClient({});
+    const result = await secrets.send(new GetSecretValueCommand({ SecretId: SECRET_ID }));
+    if (!result.SecretString) return;
+
+    const parsed = JSON.parse(result.SecretString) as Record<string, unknown>;
+    if (typeof parsed.anthropic_api_key === "string" && parsed.anthropic_api_key) {
+      process.env.ANTHROPIC_API_KEY = parsed.anthropic_api_key;
+    }
+    if (typeof parsed.cognito_client_secret === "string" && parsed.cognito_client_secret) {
+      process.env.SITEWIREAI_CLIENT_SECRET = parsed.cognito_client_secret;
+    }
+  } catch {
+    // Deliberately swallowed. A page that renders without classification is
+    // worth serving; a site that 500s because Secrets Manager had a moment is
+    // not. Sign-in will fail loudly on its own if the client secret is missing.
+  }
+}
+
 export const handler = async (event: FunctionUrlEvent): Promise<FunctionUrlResult> => {
   const path = event.rawPath ?? "/";
+
+  await loadSecrets();
 
   if (path === "/healthz") {
     return {
